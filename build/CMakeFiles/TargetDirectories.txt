@@ -1,0 +1,3 @@
+/home/amit/CPP_EX3_25-main/build/CMakeFiles/CoupGame.dir
+/home/amit/CPP_EX3_25-main/build/CMakeFiles/edit_cache.dir
+/home/amit/CPP_EX3_25-main/build/CMakeFiles/rebuild_cache.dir
