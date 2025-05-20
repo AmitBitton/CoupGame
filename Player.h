@@ -36,7 +36,7 @@ public:
 
     virtual void gather();
     virtual void tax();
-    virtual void bribe(Player& target);
+    virtual void bribe();
     virtual void arrest(Player& target);
     virtual void sanction(Player& target);
     virtual void coup(Player& target);
@@ -67,6 +67,7 @@ public:
     std::string last_action() const;
     Player* last_target() const;
     void clear_last_action();
+    void clear_last_target();
 
     void check_extra_turn();
 

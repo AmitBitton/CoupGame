@@ -7,6 +7,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace coup {
 
@@ -23,6 +24,7 @@ private:
     Player* tax_target = nullptr;
     Player* tax_source = nullptr;
     size_t previous_turn_index = 0; // חדש - שומר את מיקום השחקן שביצע את ה־tax
+    std::string last_error_message = "";
 
 public:
     Game();
@@ -77,6 +79,32 @@ public:
     void set_previous_turn_index(size_t index);
     size_t get_previous_turn_index() const;
     size_t get_next_active_index_after(Player* p) const;
+
+
+
+    // Game.h
+    std::vector<Player*> coup_generals_queue;
+    void set_coup_generals_queue(const std::vector<Player*>& q);
+    void clear_coup_generals_queue();
+    void advance_coup_block_queue(); // בדיוק כמו advance_tax_block_queue
+    bool is_waiting_coup_block() const;
+    Player* get_coup_attacker() const {
+        return coup_attacker;
+    }
+
+
+    std::vector<Player*> bribe_judges_queue;
+    void set_bribe_judges_queue(const std::vector<Player*>& q);
+    void clear_bribe_judges_queue();
+    void advance_bribe_block_queue();
+    bool is_waiting_bribe_block() const {
+        return waiting_for_bribe_block;
+    }
+
+    void try_action(std::function<void()> action);
+    std::string get_error_message() const;
+    void clear_error_message();
+    void set_error_message(const std::string& msg);
 
 };
 

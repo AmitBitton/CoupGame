@@ -21,7 +21,7 @@ namespace coup {
         if (!is_active()) throw std::runtime_error("Inactive player cannot play");
         if (!game.is_turn(this)) throw std::runtime_error("Not your turn");
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");
-        if (_sanctioned) throw std::runtime_error("Sanctioned – cannot gather");
+        if (_sanctioned) throw std::runtime_error("You are on sanctioned, cannot gather");
 
         add_coins(1);
         _last_action = "gather";
@@ -35,7 +35,7 @@ namespace coup {
 
         if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn");
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");
-        if (_sanctioned) throw std::runtime_error("Sanctioned – cannot tax");
+        if (_sanctioned) throw std::runtime_error("You are on sanctioned, cannot tax");
 
         // שמירת אינדקס כדי לדעת לאן לחזור אם לא נחסם
         game.set_previous_turn_index(game.get_turn_index(this));
@@ -74,35 +74,47 @@ namespace coup {
     }
 
 
-    void Player::bribe(Player& target) {
+    void Player::bribe() {
         if (!is_active()) throw std::runtime_error("Inactive player cannot act");
         if (!game.is_turn(this)) throw std::runtime_error("Not your turn");
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");
         if (_coins < 4) throw std::runtime_error("Not enough coins to bribe");
+        game.set_previous_turn_index(game.get_turn_index(this));
 
         deduct_coins(4);
         _last_action = "bribe";
-        _last_action_target = &target;
-        _extra_turns += 1;
+        //_last_action_target = &target;
+        _extra_turns += 2;
 
         // מתחילים חסימת שוחד – לא מקבלים מיד תור נוסף
         game.waiting_for_bribe_block = true;
         game.bribing_player = this;
 
-        // חיפוש מיידי של שופט פעיל
+        // // חיפוש מיידי של שופט פעיל
+        // for (Player* p : game.get_players()) {
+        //     if (p->is_active() && p->role() == "Judge") {
+        //         game.set_turn_to(p);  // תור עובר לשופט
+        //         return;
+        //     }
+        // }
+        std::vector<Player*> judges;
         for (Player* p : game.get_players()) {
-            if (p->is_active() && p->role() == "Judge") {
-                game.set_turn_to(p);  // תור עובר לשופט
-                return;
+            if (p->is_active() && p->role() == "Judge" && p != this ) {
+                judges.push_back(p);
             }
         }
+        if (!judges.empty()) {
+            game.set_bribe_judges_queue(judges);
+            game.set_turn_to(judges[0]);
+            return;
+        }
+
         // אין שופט — ממשיכים רגיל
         game.waiting_for_bribe_block=false;
         game.bribing_player=nullptr;
-        game.set_turn_to(this);
-      // check_extra_turn();
+        //game.set_turn_to(this);
+       check_extra_turn();
       //  game.next_turn();
-std::cout << "[Debug] " << _name << " used bribe: +2 extra turns" << std::endl;
         }
 
     void Player::arrest(Player& target) {
@@ -214,9 +226,9 @@ std::cout << "[Debug] " << _name << " used bribe: +2 extra turns" << std::endl;
         }
         std::cout << "[Debug] expected turn: " << game.turn() << ", actual: " << this->get_name() << std::endl;
 
-        if (game.turn()!=this->get_name()) throw std::runtime_error("Not your turnnnnn");
+        if (game.turn()!=this->get_name()) throw std::runtime_error("Not your turn");
         if (_coins < 7) throw std::runtime_error("Not enough coins to perform coup");
-        if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");
+       // if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");
         if (this == &target) {
             throw std::runtime_error("Cannot coup yourself.");
         }
@@ -225,29 +237,64 @@ std::cout << "[Debug] " << _name << " used bribe: +2 extra turns" << std::endl;
         _last_action = "coup";
         _last_action_target = &target;
 
-        // הפיכה מתבצעת אך ממתינה לבלוק
+        // הפיכה מתבצעת אך ממתינה לבלוקכן
         target.mark_couped();  // תצטרכי לוודא שיש set_active(false) וגם דגל מתאים
         game.waiting_for_coup_block = true;
         game.coup_attacker = this;
-        game.coup_target = &target;
 
-        // חיפוש גנרל
+        game.coup_target = &target;
+        game.set_previous_turn_index(game.get_turn_index(this));  // לשימוש בשחזור התור
+
+        // חיפוש גנרלים פעילים
+        std::vector<Player*> generals;
         for (Player* p : game.get_players()) {
             if (p->is_active() && p->role() == "General") {
-                game.set_turn_to(p);
-                return;
+                generals.push_back(p);
             }
         }
 
-        // אם אין גנרל - המשך רגיל
+
+        if (!generals.empty()) {
+            game.set_coup_generals_queue(generals);  // ⬅️ תור חדש בדיוק כמו tax_governors_queue
+            game.set_turn_to(generals[0]);           // הראשון מחליט אם לחסום או לדלג
+            return;
+        }
+
+        // אין גנרלים — ההפיכה מתבצעת מיד
         target.set_active(false);
+        game.check_game_over();
+        target.clear_couped(); // מנקה את הדגל
         game.waiting_for_coup_block = false;
         game.coup_attacker = nullptr;
         game.coup_target = nullptr;
-       // game.next_turn();
-       check_extra_turn();
+        game.set_coup_generals_queue({});  // ריקון התור
+
+        check_extra_turn();
+        std::cout << "[DEBUG] Coup initiated by: " << this->get_name()
+          << ", target: " << target.get_name()
+          << ", generals_in_queue: " << generals.size()
+          << std::endl;
+        std::cout << "[DEBUG] New turn is: " << game.turn() << std::endl;
+
 
     }
+    //     // חיפוש גנרל
+    //     for (Player* p : game.get_players()) {
+    //         if (p->is_active() && p->role() == "General") {
+    //             game.set_turn_to(p);
+    //             return;
+    //         }
+    //     }
+    //
+    //     // אם אין גנרל - המשך רגיל
+    //     target.set_active(false);
+    //     game.waiting_for_coup_block = false;
+    //     game.coup_attacker = nullptr;
+    //     game.coup_target = nullptr;
+    //    // game.next_turn();
+    //    check_extra_turn();
+    //
+    // }
 
 
     //
@@ -360,6 +407,9 @@ std::cout << "[Debug] " << _name << " used bribe: +2 extra turns" << std::endl;
     void Player::arrested_by(Player* arresting_player) {
         deduct_coins(1);
         arresting_player->add_coins(1);
+    }
+    void Player::clear_last_target() {
+        _last_action_target = nullptr;
     }
 
             }

@@ -595,7 +595,11 @@ namespace coup {
                    display.handleClick(mousePos);
                    }
            }
-
+           if (game.is_over()) {
+               window.close();  // סוגר את חלון המשחק
+               display.showWinnerScreen();
+               break;  // יציאה מהלולאה
+           }
            window.clear();
            window.draw(background);
            display.draw(window);

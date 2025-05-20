@@ -87,7 +87,7 @@ void Game::next_turn() {
     //     current->check_extra_turn();  // יפחית 1 או יחליף תור
     //     return;
     // }
-    _players_list[_current_turn]->clear_last_action();
+    //_players_list[_current_turn]->clear_last_action();
     current->mark_sanctioned(false);
 
     size_t count = 0;
@@ -225,7 +225,11 @@ void Game::enforce_coup_rule(Player* player) const {
 }
 
     void Game::advance_tax_block_queue() {
+    std::cout << "[DEBUG] Skipping Tax Block. Queue size before: " << tax_governors_queue.size() << std::endl;
+
     if (tax_governors_queue.empty()) {
+        std::cout << "[DEBUG] No more governors to skip. Returning to original turn.\n";
+
         waiting_for_tax_block = false;
 
         size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
@@ -239,8 +243,11 @@ void Game::enforce_coup_rule(Player* player) const {
 
     Player* nextGovernor = tax_governors_queue.front();
     tax_governors_queue.erase(tax_governors_queue.begin());
+    std::cout << "[DEBUG] Turn passed to: " << nextGovernor->get_name() << std::endl;
 
     set_turn_to(nextGovernor);
+    std::cout << "[DEBUG] advance_tax_block_queue() → turn: " << turn() << std::endl;
+
 }
 
     void Game::clear_tax_governors_queue() {
@@ -263,5 +270,130 @@ void Game::enforce_coup_rule(Player* player) const {
     return i;
 }
 
+    // Game.cpp
+    void Game::set_coup_generals_queue(const std::vector<Player*>& q) {
+    coup_generals_queue = q;
+}
+
+    void Game::clear_coup_generals_queue() {
+    coup_generals_queue.clear();
+}
+
+    void Game::advance_coup_block_queue() {
+    if (coup_generals_queue.empty()) {
+        // אין עוד גנרלים — ממשיכים להפיכה רגילה
+        if (coup_target) {
+            coup_target->set_active(false);
+            coup_target->clear_couped();
+        }
+        waiting_for_coup_block = false;
+        clear_coup_generals_queue();
+        coup_attacker = nullptr;
+        coup_target = nullptr;
+        size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
+        _current_turn = nextTurn;
+
+        return;
+    }
+    Player* nextGeneral = coup_generals_queue.front();
+    coup_generals_queue.erase(coup_generals_queue.begin());
+    if (!coup_generals_queue.empty()) {
+
+        set_turn_to(coup_generals_queue[0]);
+    } else {
+
+        // אף אחד לא חסם — ההפיכה מתבצעת
+        if (coup_target) {
+            coup_target->set_active(false);
+            coup_target->clear_couped();
+        }
+        waiting_for_coup_block = false;
+        clear_coup_generals_queue();
+        coup_attacker = nullptr;
+        coup_target = nullptr;
+        size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
+        _current_turn = nextTurn;
+
+    }
+}
+
+    bool Game::is_waiting_coup_block() const {
+    return waiting_for_coup_block;
+}
+    void Game::set_bribe_judges_queue(const std::vector<Player*>& q) {
+    bribe_judges_queue = q;
+}
+
+    void Game::clear_bribe_judges_queue() {
+    bribe_judges_queue.clear();
+}
+
+//     void Game::advance_bribe_block_queue() {
+//     if (bribe_judges_queue.empty()) {
+//         waiting_for_bribe_block = false;
+//         size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
+//         _current_turn = nextTurn;
+//         bribing_player = nullptr;
+//         bribe_judges_queue.clear();
+//         return;
+//     }
+//
+//     Player* nextJudge = bribe_judges_queue.front();
+//     bribe_judges_queue.erase(bribe_judges_queue.begin());
+//     set_turn_to(nextJudge);
+// }
+    void Game::advance_bribe_block_queue() {
+    if (!bribe_judges_queue.empty()) {
+        // הסר את השופט הנוכחי מהתור
+
+        bribe_judges_queue.erase(bribe_judges_queue.begin());
+
+        // אם יש שופטים נוספים בתור – תן להם תור
+        if (!bribe_judges_queue.empty()) {
+            set_turn_to(bribe_judges_queue[0]);
+            return;
+        }
+    }
+
+    // כל השופטים דילגו או לא היו בכלל – ממשיכים כרגיל
+    waiting_for_bribe_block = false;
+    bribing_player = nullptr;
+    bribe_judges_queue.clear();
+
+    // מחזירים תור למי שביצע את השוחד
+    if (previous_turn_index < _players_list.size()) {
+        _current_turn = previous_turn_index;
+        Player* original = _players_list[_current_turn];
+
+        // קוראים לו check_extra_turn כדי שיישאר אם יש לו עוד תור
+        if (original->is_active()) {
+            original->check_extra_turn();
+        } else {
+            next_turn();  // אם בינתיים הוא הודח, המשיכי כרגיל
+        }
+    } else {
+        next_turn(); // fallback
+    }
+}
+    void Game::try_action(std::function<void()> action) {
+    try {
+        action();  // מריץ את הפעולה בפועל
+        last_error_message = "";
+    } catch (const std::exception& e) {
+        last_error_message = e.what();
+        std::cerr << "[ERROR] " << last_error_message << std::endl;
+    }
+}
+
+    std::string Game::get_error_message() const {
+    return last_error_message;
+}
+
+    void Game::clear_error_message() {
+    last_error_message.clear();
+}
+    void Game::set_error_message(const std::string& msg) {
+    last_error_message = msg;
+}
 }
 

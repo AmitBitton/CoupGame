@@ -32,8 +32,8 @@ namespace coup {
         target.clear_last_action();
         game.waiting_for_bribe_block = false;
         game.bribing_player = nullptr;
-        game.set_turn_to(&target);
-
+        size_t next = game.get_next_active_index_after(&target);
+        game.set_turn_to(game.get_players()[next]);
     }
 
     // void Judge::blockBribe() {

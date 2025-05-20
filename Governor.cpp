@@ -58,6 +58,8 @@ namespace coup {
             game.set_waiting_tax_block(true);
             game.set_tax_target(this);
             game.set_tax_governors_queue(governors);
+            game.set_previous_turn_index(game.get_turn_index(this));  // ✅ שמירת התור הנוכחי
+
             game.set_turn_to(governors[0]); // הראשון יחליט אם לחסום
             return;
         }
@@ -109,7 +111,6 @@ namespace coup {
         // שלב 1: הורדת המטבעות וביטול הפעולה
         target.deduct_coins(tax_amount);
         target.clear_last_action();
-
         Player* source = game.get_tax_source();  // קודם כל לשמור!
         game.set_waiting_tax_block(false);
         game.set_tax_target(nullptr);

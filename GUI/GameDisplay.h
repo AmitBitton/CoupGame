@@ -25,6 +25,10 @@ private:
     void updatePlayerInfo();
     GuiButton blockTaxButton;
     GuiButton skipTaxButton;
+    GuiButton blockBribeButton;
+    GuiButton skipBribeButton;
+    GuiButton blockCoupButton;
+    GuiButton skipCoupButton;
 
 public:
     GameDisplay(Game& gameRef, sf::Font& fontRef);
@@ -35,6 +39,10 @@ public:
     void updateButtonStates();
     void updateHover(sf::Vector2f pos);
     void setTurn(const std::string& name);
+    bool allowActionOrError(Player* current);
+    void showErrorPopup(const std::string& errorMessage);
+    void checkAndShowError();
+    void showWinnerScreen();
 
 };
 
