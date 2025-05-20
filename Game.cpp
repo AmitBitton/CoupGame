@@ -224,30 +224,68 @@ void Game::enforce_coup_rule(Player* player) const {
     tax_governors_queue = queue;
 }
 
+//     void Game::advance_tax_block_queue() {
+//     std::cout << "[DEBUG] Skipping Tax Block. Queue size before: " << tax_governors_queue.size() << std::endl;
+//
+//     if (tax_governors_queue.empty()) {
+//         std::cout << "[DEBUG] No more governors to skip. Returning to original turn.\n";
+//
+//         waiting_for_tax_block = false;
+//
+//         size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
+//         _current_turn = nextTurn;
+//
+//         tax_source = nullptr;
+//         tax_target = nullptr;
+//         tax_governors_queue.clear();
+//         return;
+//     }
+//
+//     Player* nextGovernor = tax_governors_queue.front();
+//     tax_governors_queue.erase(tax_governors_queue.begin());
+//     std::cout << "[DEBUG] Turn passed to: " << nextGovernor->get_name() << std::endl;
+//
+//     set_turn_to(nextGovernor);
+//     std::cout << "[DEBUG] advance_tax_block_queue() → turn: " << turn() << std::endl;
+//
+// }
     void Game::advance_tax_block_queue() {
     std::cout << "[DEBUG] Skipping Tax Block. Queue size before: " << tax_governors_queue.size() << std::endl;
 
     if (tax_governors_queue.empty()) {
-        std::cout << "[DEBUG] No more governors to skip. Returning to original turn.\n";
+        std::cout << "[DEBUG] No governors in queue — ending tax block phase.\n";
 
         waiting_for_tax_block = false;
-
-        size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
-        _current_turn = nextTurn;
-
         tax_source = nullptr;
         tax_target = nullptr;
         tax_governors_queue.clear();
+
+        size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
+        _current_turn = nextTurn;
         return;
     }
 
     Player* nextGovernor = tax_governors_queue.front();
     tax_governors_queue.erase(tax_governors_queue.begin());
-    std::cout << "[DEBUG] Turn passed to: " << nextGovernor->get_name() << std::endl;
 
-    set_turn_to(nextGovernor);
+    if (tax_governors_queue.empty()) {
+        // זה היה הנציב האחרון – סיום שלב החסימה
+        std::cout << "[DEBUG] Last governor skipped — returning turn to next player.\n";
+
+        waiting_for_tax_block = false;
+        tax_source = nullptr;
+        tax_target = nullptr;
+        tax_governors_queue.clear();
+
+        size_t nextTurn = get_next_active_index_after(_players_list[previous_turn_index]);
+        _current_turn = nextTurn;
+    } else {
+        // יש עוד נציבים – עוברים לנציב הבא
+        std::cout << "[DEBUG] Moving to next governor: " << tax_governors_queue.front()->get_name() << "\n";
+        set_turn_to(tax_governors_queue.front());
+    }
+
     std::cout << "[DEBUG] advance_tax_block_queue() → turn: " << turn() << std::endl;
-
 }
 
     void Game::clear_tax_governors_queue() {
