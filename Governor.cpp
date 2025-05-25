@@ -40,7 +40,7 @@ namespace coup {
         if (game.is_waiting_tax_block()) {
             throw std::runtime_error("Currently in tax blocking phase – cannot act");
         }
-
+        add_coins(3);
         _last_action = "tax";
         _last_action_target = nullptr;
 
@@ -65,7 +65,13 @@ namespace coup {
         }
 
         // אם אין אף נציב אחר שיכול לחסום, מקבל 3 מטבעות
-        add_coins(3);
+     //   add_coins(3);
+        game.set_waiting_tax_block(false);
+        game.clear_tax_governors_queue();
+        game.set_tax_target(nullptr);
+        game.set_tax_source(nullptr);
+        game.print_turn_summary("TAX", this);  // רק אם אין חסימה
+
         check_extra_turn();
     }
 
@@ -120,6 +126,7 @@ namespace coup {
         if (!source) throw std::runtime_error("Tax source is null!");
         size_t index = game.get_next_active_index_after(source);
         game.set_turn_to(game.get_players()[index]);
+        game.print_turn_summary("TAX", source, nullptr, true, this);
 
     }
 

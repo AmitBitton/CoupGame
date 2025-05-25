@@ -26,12 +26,12 @@ namespace coup {
         add_coins(1);
         _last_action = "gather";
         _last_action_target = nullptr;
+        game.print_turn_summary("GATHER", this);
         check_extra_turn();
     }
 
     void Player::tax() {
         if (!is_active()) throw std::runtime_error("Inactive player cannot act");
-        std::cout << "[Debug] expected turn: " << game.turn() << ", actual: " << this->get_name() << std::endl;
 
         if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn");
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");
@@ -39,7 +39,6 @@ namespace coup {
 
         // שמירת אינדקס כדי לדעת לאן לחזור אם לא נחסם
         game.set_previous_turn_index(game.get_turn_index(this));
-        std::cout << "[Debug] previous_turn_index = " << game.get_previous_turn_index() << " (" << this->get_name() << ")\n";
         add_coins(2);
 
         _last_action = "tax";
@@ -51,12 +50,10 @@ namespace coup {
         game.set_tax_source(this);  // ✅ תיקון חשוב! שומר מי עשה את המס בפועל
 
         std::vector<Player*> governors;
-        std::cout << "[Debug] Adding to tax_governors_queue:\n";
 
         for (Player* p : game.get_players()) {
             if (p->is_active() && p->role() == "Governor" && p != this) {
                 governors.push_back(p);
-                std::cout << " - " << p->get_name() << " (" << p << ")\n";
             }
         }
 
@@ -70,6 +67,8 @@ namespace coup {
         game.set_waiting_tax_block(false);
         game.set_tax_target(nullptr);
         game.set_tax_source(nullptr);
+        game.print_turn_summary("TAX", this);
+
         check_extra_turn();
     }
 
@@ -87,8 +86,8 @@ namespace coup {
         _extra_turns += 2;
 
         // מתחילים חסימת שוחד – לא מקבלים מיד תור נוסף
-        game.waiting_for_bribe_block = true;
-        game.bribing_player = this;
+        game.set_waiting_for_bribe_block(true);
+        game.set_bribing_player(this);
 
         // // חיפוש מיידי של שופט פעיל
         // for (Player* p : game.get_players()) {
@@ -110,8 +109,10 @@ namespace coup {
         }
 
         // אין שופט — ממשיכים רגיל
-        game.waiting_for_bribe_block=false;
-        game.bribing_player=nullptr;
+        game.set_waiting_for_bribe_block(false);
+        game.set_bribing_player(nullptr);
+        game.print_turn_summary("BRIBE", this);
+
         //game.set_turn_to(this);
        check_extra_turn();
       //  game.next_turn();
@@ -130,6 +131,11 @@ namespace coup {
         for (Player* p : game.get_players()) {
             Spy* spy = dynamic_cast<Spy*>(p);
             if (spy && spy->is_active() && spy->is_arrest_blocked(this)) {
+                std::cout << "\n======= TURN SUMMARY =======\n";
+                std::cout << get_name() << " (" << role() << ") tried to ARREST\n";
+                std::cout << "-> Blocked from acting this turn by Spy: " << spy->get_name() << " (" << spy->role() << ")\n";
+                std::cout << "=> RESULT: Action DENIED before execution.\n";
+                std::cout << "============================\n" << std::endl;
                 throw std::runtime_error("You are blocked from using arrest this turn (by Spy).");
             }
         }
@@ -171,7 +177,7 @@ namespace coup {
             _last_action_target = &target;
             this->set_last_arrested_target(&target);
          //   game.next_turn();
-
+        game.print_turn_summary("ARREST", this, &target);
         check_extra_turn();
 
     }
@@ -214,6 +220,8 @@ namespace coup {
         // }
         _last_action = "sanction";
         _last_action_target = &target;
+        game.print_turn_summary("SANCTION", this, &target);
+
       check_extra_turn();
       //game.next_turn();
 
@@ -224,7 +232,7 @@ namespace coup {
         if (!is_active() || !target.is_active()) {
             throw std::runtime_error("Both players must be active.");
         }
-        std::cout << "[Debug] expected turn: " << game.turn() << ", actual: " << this->get_name() << std::endl;
+        // std::cout << "[Debug] expected turn: " << game.turn() << ", actual: " << this->get_name() << std::endl;
 
         if (game.turn()!=this->get_name()) throw std::runtime_error("Not your turn");
         if (_coins < 7) throw std::runtime_error("Not enough coins to perform coup");
@@ -239,10 +247,10 @@ namespace coup {
 
         // הפיכה מתבצעת אך ממתינה לבלוקכן
         target.mark_couped();  // תצטרכי לוודא שיש set_active(false) וגם דגל מתאים
-        game.waiting_for_coup_block = true;
-        game.coup_attacker = this;
+        game.set_waiting_coup_block(true);
+        game.set_coup_attacker(this);
 
-        game.coup_target = &target;
+        game.set_coup_target(&target);
         game.set_previous_turn_index(game.get_turn_index(this));  // לשימוש בשחזור התור
 
         // חיפוש גנרלים פעילים
@@ -264,17 +272,18 @@ namespace coup {
         target.set_active(false);
         game.check_game_over();
         target.clear_couped(); // מנקה את הדגל
-        game.waiting_for_coup_block = false;
-        game.coup_attacker = nullptr;
-        game.coup_target = nullptr;
+        game.set_waiting_coup_block(false);
+        game.set_coup_attacker(nullptr);
+        game.set_coup_target(nullptr);
         game.set_coup_generals_queue({});  // ריקון התור
+        game.print_turn_summary("COUP", this, &target);
 
         check_extra_turn();
-        std::cout << "[DEBUG] Coup initiated by: " << this->get_name()
-          << ", target: " << target.get_name()
-          << ", generals_in_queue: " << generals.size()
-          << std::endl;
-        std::cout << "[DEBUG] New turn is: " << game.turn() << std::endl;
+        // std::cout << "[DEBUG] Coup initiated by: " << this->get_name()
+        //   << ", target: " << target.get_name()
+        //   << ", generals_in_queue: " << generals.size()
+        //   << std::endl;
+        // std::cout << "[DEBUG] New turn is: " << game.turn() << std::endl;
 
 
     }
@@ -308,12 +317,18 @@ namespace coup {
     // }
 
     void Player::check_extra_turn() {
-        std::cout << "[Debug] " << _name << " checking extra turn. Remaining: " << _extra_turns << std::endl;
+        // std::cout << "[Debug] " << _name << " checking extra turn. Remaining: " << _extra_turns << std::endl;
 
         if (_extra_turns > 0) {
             _extra_turns--;
+            Merchant* merchant = dynamic_cast<Merchant*>(this);
+            if (merchant && merchant->is_active()) {
+                merchant->start_turn_bonus();
+            }
+            this->mark_sanctioned(false);
             // נשארת בתור
         } else {
+
             game.next_turn();
         }
     }
@@ -411,7 +426,9 @@ namespace coup {
     void Player::clear_last_target() {
         _last_action_target = nullptr;
     }
-
-            }
+    int Player::get_extra_turn() const {
+        return _extra_turns;
+    }
+}
 
 

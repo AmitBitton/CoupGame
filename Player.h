@@ -93,6 +93,7 @@ public:
     Player* get_last_arrested_target() const { return last_arrested_target; }
     void clear_last_arrested_target() { last_arrested_target = nullptr; }
 
+    int get_extra_turn() const;
 
 };
 

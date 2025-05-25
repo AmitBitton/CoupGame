@@ -16,3 +16,4 @@ add_executable(CoupGame
 )
 
 target_link_libraries(CoupGame sfml-graphics sfml-window sfml-system)
+

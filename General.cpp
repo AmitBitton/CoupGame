@@ -48,11 +48,12 @@ namespace coup {
 
         // שמירת מבצע ההפיכה (attacker) לשחזור התור הנכון
         Player* attacker = game.get_coup_attacker();
+        game.print_turn_summary("COUP", attacker, &target, true, this);
 
         // ניקוי מצב ההפיכה
-        game.waiting_for_coup_block = false;
-        game.coup_attacker = nullptr;
-        game.coup_target = nullptr;
+        game.set_waiting_coup_block(false);
+        game.set_coup_attacker(nullptr);
+        game.set_coup_target(nullptr);
         game.clear_coup_generals_queue();
 
         // קביעת התור לשחקן הבא אחרי זה שביצע את ההפיכה

@@ -28,12 +28,16 @@ namespace coup {
         if (target.last_action() != "bribe") {
             throw std::runtime_error("No bribe to undo for this player");
         }
-        target.cancel_extra_turn();
+        while (target.has_extra_turn()) {
+            target.cancel_extra_turn();
+        }
         target.clear_last_action();
-        game.waiting_for_bribe_block = false;
-        game.bribing_player = nullptr;
+        game.set_waiting_for_bribe_block(false);
+        game.set_bribing_player(nullptr);
         size_t next = game.get_next_active_index_after(&target);
         game.set_turn_to(game.get_players()[next]);
+        game.print_turn_summary("BRIBE", &target, nullptr, true, this);
+
     }
 
     // void Judge::blockBribe() {

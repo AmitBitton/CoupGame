@@ -597,7 +597,7 @@ specialStartX += buttonSize.x + spacing;
     blockCoupButton = GuiButton(font, "Block Coup", sf::Vector2f(300, 430), sf::Vector2f(150, 40), [this]() {
     try {
         Player* current = game.get_current_player();
-        Player* target = game.coup_target;
+        Player* target = game.get_coup_target();
 
         if (current && current->role() == "General" && target) {
             General* general = dynamic_cast<General*>(current);
@@ -674,7 +674,7 @@ specialStartX += buttonSize.x + spacing;
     // });
     blockBribeButton = GuiButton(font, "Block Bribe", sf::Vector2f(300, 430), sf::Vector2f(150, 40), [this]() {
         Player* current = game.get_current_player();
-        Player* briber = game.bribing_player;
+        Player* briber = game.get_bribing_player();
         if (current && current->role() == "Judge" && briber) {
             Judge* judge = dynamic_cast<Judge*>(current);
             if (!judge) throw std::runtime_error("Failed to cast to Judge");
@@ -840,7 +840,7 @@ void GameDisplay::updateButtonStates() {
     std::cout << "[DEBUG] updateButtonStates: current=" << current->get_name()
               << ", role=" << role
               << ", waiting_for_coup_block=" << game.is_waiting_coup_block()
-              << ", coup_target=" << (game.coup_target ? game.coup_target->get_name() : "nullptr")
+              << ", coup_target=" << (game.get_coup_target() ? game.get_coup_target()->get_name() : "nullptr")
               << ", coup_attacker=" << (game.get_coup_attacker() ? game.get_coup_attacker()->get_name() : "nullptr")
               << ", is_turn=" << game.is_turn(current)
               << std::endl;
@@ -860,7 +860,7 @@ void GameDisplay::updateButtonStates() {
     };
 
     // כפתורים של בלוקים שמופיעים בתור מיוחד
-    bool isBlockingPhase = game.is_waiting_tax_block() || game.waiting_for_bribe_block || game.waiting_for_coup_block;
+    bool isBlockingPhase = game.is_waiting_tax_block() || game.is_waiting_bribe_block() || game.is_waiting_coup_block();
 
     for (auto& btn : actionButtons) {
         const std::string& label = btn.getLabel();
@@ -888,7 +888,7 @@ void GameDisplay::updateButtonStates() {
       if (game.is_waiting_coup_block() && role == "General" && game.is_turn(current)) {
           std::cout << "[DEBUG] General is in blocking phase. Label: " << label
              << ", current->coins(): " << current->coins()
-             << ", coup_target: " << (game.coup_target ? game.coup_target->get_name() : "nullptr")
+             << ", coup_target: " << (game.get_coup_target() ? game.get_coup_target()->get_name() : "nullptr")
              << std::endl;
 
             if ((label == "Block Coup" || label == "Skip Coup Block") ) {

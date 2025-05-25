@@ -12,17 +12,12 @@ namespace coup {
 class Baron : public Player{
 
 public:
-    Baron(Game& game, const std::string& name);
-    std::string role() const override;
+    Baron(Game& game, const std::string& name); // Constructor: initializes a Baron player with a name and a reference to the game
+    std::string role() const override; // Returns the role of the player as a string ("Baron")
 
-    // פעולה מיוחדת
-    void invest();
+    void invest(); // Special ability: doubles coins (3 → 6) if the Baron has at least 3 coins
 
-    // פונקציה שנקראת על הברון אם חטף sanction
-    void on_sanctioned();
-
-
-
+    void on_sanctioned(); // Called when the Baron is sanctioned: grants 1 compensation coin
 
 };
 

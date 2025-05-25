@@ -7,6 +7,7 @@
 #include <stdexcept>
 #include "Spy.h"
 #include "Merchant.h"
+#include "Governor.h"
 #include <iostream>
 using namespace std;
 
@@ -100,9 +101,19 @@ void Game::next_turn() {
 
     enforce_coup_rule(_players_list[_current_turn]);
 
+    size_t current_index = _current_turn;
+
+    for (Player* p : _players_list) {
+        Spy* spy = dynamic_cast<Spy*>(p);
+        if (spy && spy->is_active()) {
+            spy->release_arrest_block_if_expired(current, current_index);
+        }
+    }
+
     // שחרור חסימות arrest אם הגיע הזמן של השחקן הנוכחי
 //    Player* current = _players_list[_current_turn];
-    size_t current_index = _current_turn;
+    current = _players_list[_current_turn];
+
 
 
     // ✨ בונוס לסוחר בתחילת תור
@@ -111,19 +122,11 @@ void Game::next_turn() {
         merchant->start_turn_bonus();
     }
 
-
-    for (Player* p : _players_list) {
-        Spy* spy = dynamic_cast<Spy*>(p);
-        if (spy && spy->is_active()) {
-            spy->release_arrest_block_if_expired(current, current_index);
-        }
-    }
-    std::cout << "[Debug] Next turn: " << _players_list[_current_turn]->get_name() << std::endl;
-    // 🧠 כאן מוסיפים דיבאג של מצב המטבעות
-    std::cout << "[Debug] Coins after turn: " << std::endl;
-    for (Player* p : _players_list) {
-        std::cout << "  - " << p->get_name() << " (" << p->role() << "): " << p->coins() << " coins" << std::endl;
-    }
+    // // 🧠 כאן מוסיפים דיבאג של מצב המטבעות
+    // std::cout << "[Debug] Coins after turn: " << std::endl;
+    // for (Player* p : _players_list) {
+    //     std::cout << "  - " << p->get_name() << " (" << p->role() << "): " << p->coins() << " coins" << std::endl;
+    // }
 }
 
 
@@ -160,7 +163,6 @@ void Game::enforce_coup_rule(Player* player) const {
     }
 }
     size_t Game::get_turn_index(Player* player) const {
-    std::cout << "[Debug] Looking for player: " << player->get_name() << " (" << player << ")\n";
 
     for (size_t i = 0; i < _players_list.size(); ++i) {
         if (_players_list[i] == player) {
@@ -180,10 +182,11 @@ void Game::enforce_coup_rule(Player* player) const {
 
     size_t index = get_turn_index(p);
     _current_turn = index;
-    std::cout << "[Debug] Current player list:\n";
-    for (Player* p : _players_list) {
-        std::cout << " - " << p->get_name() << " (" << p << ")\n";
-    }
+
+    // std::cout << "[Debug] Current player list:\n";
+    // for (Player* p : _players_list) {
+    //     std::cout << " - " << p->get_name() << " (" << p << ")\n";
+    // }
 
 }
 
@@ -250,11 +253,13 @@ void Game::enforce_coup_rule(Player* player) const {
 //
 // }
     void Game::advance_tax_block_queue() {
-    std::cout << "[DEBUG] Skipping Tax Block. Queue size before: " << tax_governors_queue.size() << std::endl;
 
     if (tax_governors_queue.empty()) {
-        std::cout << "[DEBUG] No governors in queue — ending tax block phase.\n";
-
+        // if (tax_source && tax_source->last_action() == "tax") {
+        //     if (Governor* gov = dynamic_cast<Governor*>(tax_source)) {
+        //         gov->add_coins(3);
+        //     }
+        // }
         waiting_for_tax_block = false;
         tax_source = nullptr;
         tax_target = nullptr;
@@ -270,8 +275,14 @@ void Game::enforce_coup_rule(Player* player) const {
 
     if (tax_governors_queue.empty()) {
         // זה היה הנציב האחרון – סיום שלב החסימה
-        std::cout << "[DEBUG] Last governor skipped — returning turn to next player.\n";
-
+        // if (tax_source && tax_source->last_action() == "tax") {
+        //     if (Governor* gov = dynamic_cast<Governor*>(tax_source)) {
+        //         gov->add_coins(3);
+        //     }
+        // }
+        if (tax_source) {
+            print_turn_summary("TAX", tax_source);
+        }
         waiting_for_tax_block = false;
         tax_source = nullptr;
         tax_target = nullptr;
@@ -281,11 +292,9 @@ void Game::enforce_coup_rule(Player* player) const {
         _current_turn = nextTurn;
     } else {
         // יש עוד נציבים – עוברים לנציב הבא
-        std::cout << "[DEBUG] Moving to next governor: " << tax_governors_queue.front()->get_name() << "\n";
         set_turn_to(tax_governors_queue.front());
     }
 
-    std::cout << "[DEBUG] advance_tax_block_queue() → turn: " << turn() << std::endl;
 }
 
     void Game::clear_tax_governors_queue() {
@@ -308,7 +317,6 @@ void Game::enforce_coup_rule(Player* player) const {
     return i;
 }
 
-    // Game.cpp
     void Game::set_coup_generals_queue(const std::vector<Player*>& q) {
     coup_generals_queue = q;
 }
@@ -323,6 +331,9 @@ void Game::enforce_coup_rule(Player* player) const {
         if (coup_target) {
             coup_target->set_active(false);
             coup_target->clear_couped();
+        }
+        if (coup_attacker && coup_target) {
+            print_turn_summary("COUP", coup_attacker, coup_target);
         }
         waiting_for_coup_block = false;
         clear_coup_generals_queue();
@@ -344,6 +355,9 @@ void Game::enforce_coup_rule(Player* player) const {
         if (coup_target) {
             coup_target->set_active(false);
             coup_target->clear_couped();
+        }
+        if (coup_attacker && coup_target) {
+            print_turn_summary("COUP", coup_attacker, coup_target);
         }
         waiting_for_coup_block = false;
         clear_coup_generals_queue();
@@ -392,6 +406,9 @@ void Game::enforce_coup_rule(Player* player) const {
             return;
         }
     }
+    if (bribing_player) {
+        print_turn_summary("BRIBE", bribing_player);
+    }
 
     // כל השופטים דילגו או לא היו בכלל – ממשיכים כרגיל
     waiting_for_bribe_block = false;
@@ -433,5 +450,38 @@ void Game::enforce_coup_rule(Player* player) const {
     void Game::set_error_message(const std::string& msg) {
     last_error_message = msg;
 }
+
+    size_t Game::get_current_turn_index() const {
+    return _current_turn;
+}
+
+
+
+    void Game::print_turn_summary(const std::string& action, Player* actor, Player* target,
+                                  bool was_blocked, Player* blocker) {
+    std::cout << "\n======= TURN SUMMARY =======\n";
+    std::cout << actor->get_name() << " (" << actor->role() << ") performed " << action;
+    if (target) {
+        std::cout << " on " << target->get_name() << " (" << target->role() << ")";
+    }
+    std::cout << ".\n";
+
+    if (was_blocked && blocker) {
+        std::cout << "-> Blocked by " << blocker->get_name() << " (" << blocker->role() << ").\n";
+        std::cout << "=> RESULT: Action FAILED.\n";
+    } else {
+        std::cout << "=> RESULT: Action SUCCEEDED.\n";
+    }
+
+    std::cout << "\n--- Players Coins ---\n";
+for (Player* p : this->_players_list) {
+        std::cout << p->get_name() << " (" << p->role() << ")";
+        if (!p->is_active()) std::cout << " [OUT]";
+        std::cout << " - " << p->coins() << " coins\n";
+    }
+    std::cout << "============================\n" << std::endl;
+}
+
+
 }
 
