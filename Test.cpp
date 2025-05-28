@@ -50,17 +50,9 @@ namespace coup {
                 game.addPlayer(new General(game, "Avia"));
                 game.addPlayer(new Judge(game, "Elad"));
                 game.addPlayer(new Merchant(game, "Dolev"));
-                // CHECK_THROWS_AS(game.addPlayer(new Spy(game, "Lir")), std::runtime_error);
                 Spy* lir = new Spy(game, "Lir");
                 CHECK_THROWS_AS(game.addPlayer(lir), std::runtime_error);
-                delete lir; // 🧼 מחיקה ידנית רק אם לא נוסף למשחק
-                // Spy* lir = new Spy(game, "Lir");
-                // try {
-                //     game.addPlayer(lir);
-                // } catch (const std::runtime_error&) {
-                //     delete lir;  // רק אם נכשל
-                // }
-
+                delete lir;
                 deleteAllPlayers(game);
 
             }
@@ -152,6 +144,8 @@ namespace coup {
         }
 
         SUBCASE("Tax Action") {
+
+          //skip tax block
             amit->tax();
             CHECK(game.is_waiting_tax_block());
             CHECK(game.get_tax_target() == amit);
@@ -162,44 +156,42 @@ namespace coup {
             CHECK(amit->coins() == 3);
             CHECK(amit->last_action() == "tax");
 
+            //block tax
             ariel->tax();
             CHECK(game.is_waiting_tax_block());
             CHECK(game.get_tax_target() == ariel);
             CHECK(game.get_tax_source() == ariel);
             CHECK(game.turn() == "Amit");
-            // Amit מבטלת את המס של אריאל
             CHECK_NOTHROW(dynamic_cast<Governor*>(amit)->undo(*ariel));
             CHECK_FALSE(game.is_waiting_tax_block());
-            CHECK(ariel->coins() == 0);  // הכסף בוטל
-            CHECK(ariel->last_action().empty());  // הפעולה נמחקה
+            CHECK(ariel->coins() == 0);
+            CHECK(ariel->last_action().empty());
             deleteAllPlayers(game);
 
         }
 
         SUBCASE("Bribe Action with judge") {
-
             amit->add_coins(4);
-            amit->bribe();  // מתחיל שוחד – Linoy אמורה לקבל תור לחסום
+            amit->bribe();
 
             CHECK(game.is_waiting_bribe_block());
             CHECK(game.get_bribing_player() == amit);
-            CHECK(amit->has_extra_turn());           // יש לו extra_turns מוגדרים
-            CHECK(amit->get_extra_turn() == 2);      // לפני חסימה
+            CHECK(amit->has_extra_turn());
+            CHECK(amit->get_extra_turn() == 2);
 
-            // מדמים ש־Linoy דילגה:
-            game.advance_bribe_block_queue();  // התור חוזר ל־Amit והוא מבצע check_extra_turn()
+            game.advance_bribe_block_queue();
 
             CHECK_FALSE(game.is_waiting_bribe_block());
-            CHECK(game.turn() == "Amit");              // התור חזר אליו
-            CHECK(amit->get_extra_turn() == 1);        // תור אחד נוצל
-            amit->gather();                            // תור ראשון
-            CHECK(amit->coins() == 1);  // הכסף בוטל
-            CHECK(amit->get_extra_turn() == 0);        // תור שני נשאר
+            CHECK(game.turn() == "Amit");
+            CHECK(amit->get_extra_turn() == 1);
+            amit->gather();
+            CHECK(amit->coins() == 1);
+            CHECK(amit->get_extra_turn() == 0);
 
-            amit->gather();                            // תור שני
-            CHECK(amit->coins() == 2);  // הכסף בוטל
+            amit->gather();
+            CHECK(amit->coins() == 2);
 
-            CHECK_THROWS_AS(amit->gather(), std::runtime_error);  // כבר לא תור שלו
+            CHECK_THROWS_AS(amit->gather(), std::runtime_error);
             deleteAllPlayers(game);
 
         }
@@ -232,7 +224,7 @@ namespace coup {
             CHECK(avia->coins() == 0);
             CHECK(yahav->is_sanctioned());
             CHECK(avia->last_action() == "sanction");
-            CHECK(yahav->coins() == 1);               // פיצוי לברון!
+            CHECK(yahav->coins() == 1); //yahav is a Baron
             game.set_turn_to(yahav);
             CHECK_THROWS_AS(yahav->gather(), std::runtime_error); // Sanction blocks gather
             CHECK_THROWS_AS(avia->sanction(*yahav), std::runtime_error); // Insufficient coins
@@ -265,61 +257,55 @@ namespace coup {
             deleteAllPlayers(game);
 
         }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+
         deleteAllPlayers(game);
 
     }
 
     TEST_CASE("Governor Role Tests") {
         Game game;
-        Player* alice = new Governor(game, "Alice");
-        Player* bob = new Spy(game, "Bob");
+        Player* amit = new Governor(game, "Amit");
+        Player* ariel = new Spy(game, "Ariel");
         Player* charlie = new Governor(game, "Charlie");
-        game.addPlayer(alice);
-        game.addPlayer(bob);
+        game.addPlayer(amit);
+        game.addPlayer(ariel);
         game.addPlayer(charlie);
 
         SUBCASE("Tax Action") {
-            alice->tax();
-            CHECK(alice->coins() == 3); // Governor gets 3 coins
+            amit->tax();
+            CHECK(amit->coins() == 3); // Governor gets 3 coins
             CHECK(game.is_waiting_tax_block());
-            CHECK(game.get_tax_target() == alice);
+            CHECK(game.get_tax_target() == amit);
             CHECK(game.turn() == "Charlie"); // Charlie (another Governor) can block
             deleteAllPlayers(game);
 
         }
 
         SUBCASE("Undo Tax Action") {
-            game.set_turn_to(bob);
-            bob->tax();
-            CHECK(bob->coins() == 2);
+            game.set_turn_to(ariel);
+            ariel->tax();
+            CHECK(ariel->coins() == 2);
             CHECK(game.is_waiting_tax_block());
-            CHECK(game.get_tax_target() == bob);
-            CHECK(game.turn() == "Alice"); // Alice בתור – כי היא הנציבה הראשונה שיכולה לחסום
-            alice->undo(*bob);
-            CHECK(bob->coins() == 0);
-            CHECK(bob->last_action().empty());
-            CHECK_FALSE(game.is_waiting_tax_block());    // המשחק לא מחכה יותר לחסימה
-            CHECK(game.turn() == "Charlie");             // התור עבר לשחקן הבא אחרי Bob
+            CHECK(game.get_tax_target() == ariel);
+            CHECK(game.turn() == "Amit");
+            amit->undo(*ariel);
+            CHECK(ariel->coins() == 0);
+            CHECK(ariel->last_action().empty());
+            CHECK_FALSE(game.is_waiting_tax_block());
+            CHECK(game.turn() == "Charlie");
             deleteAllPlayers(game);
 
         }
 
         SUBCASE("Edge Cases") {
-            alice->add_coins(10);
-            CHECK_THROWS_AS(alice->tax(), std::runtime_error); // Must coup with 10+ coins
-            alice->deactivate();
-            CHECK_THROWS_AS(alice->tax(), std::runtime_error); // Inactive player
+            amit->add_coins(10);
+            CHECK_THROWS_AS(amit->tax(), std::runtime_error); // Must coup with 10+ coins
+            amit->deactivate();
+            CHECK_THROWS_AS(amit->tax(), std::runtime_error); // Inactive player
             deleteAllPlayers(game);
 
         }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+
             deleteAllPlayers(game);
     }
 
@@ -352,7 +338,7 @@ TEST_CASE("Spy Role Tests") {
 
      }
         SUBCASE("Block Arrest - 3 players") {
-        Player* charlie = new Judge(game, "Charlie");  // הוספנו שחקן נוסף
+        Player* charlie = new Judge(game, "Charlie");
 
         game.addPlayer(charlie);
         alice->block_arrest_of(*bob);
@@ -366,10 +352,21 @@ TEST_CASE("Spy Role Tests") {
         deleteAllPlayers(game);
 
     }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+        SUBCASE("Spy actions do not consume turn or coins") {
+
+        CHECK(game.get_current_player() == alice);
+        CHECK(alice->coins() == 0);
+        bob->add_coins(3);
+        int seen = alice->see_coins(*bob);
+        CHECK(seen == 3);
+        CHECK(alice->coins() == 0);
+        alice->block_arrest_of(*bob);
+        CHECK(game.get_current_player() == alice);
+        CHECK(alice->coins() == 0);
+
+        deleteAllPlayers(game);
+    }
+
         deleteAllPlayers(game);
 
 }
@@ -398,10 +395,7 @@ TEST_CASE("Baron Role Tests") {
         deleteAllPlayers(game);
 
     }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+
         deleteAllPlayers(game);
 
 }
@@ -433,12 +427,7 @@ TEST_CASE("General Role Tests") {
          CHECK(alice->coins() == 1); // General gets coin back
          CHECK(bob->coins() == 0);
         deleteAllPlayers(game);
-
      }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
         deleteAllPlayers(game);
 
 }
@@ -470,10 +459,7 @@ TEST_CASE("Judge Role Tests") {
         deleteAllPlayers(game);
 
     }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+
         deleteAllPlayers(game);
 
 }
@@ -506,10 +492,6 @@ TEST_CASE("Merchant Role Tests") {
         deleteAllPlayers(game);
 
     }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
             deleteAllPlayers(game);
 }
 
@@ -542,10 +524,7 @@ TEST_CASE("Edge Cases and Interactions") {
             deleteAllPlayers(game);
 
         }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+
         deleteAllPlayers(game);
 
     }
@@ -563,6 +542,7 @@ TEST_CASE("Edge Cases and Interactions") {
         game.addPlayer(david);
         game.addPlayer(eve);
         game.addPlayer(frank);
+
         SUBCASE("Multiple Generals Blocking Coup") {
             alice->add_coins(7);
             alice->coup(*bob);
@@ -601,17 +581,42 @@ TEST_CASE("Edge Cases and Interactions") {
             deleteAllPlayers(game);
 
         }
-        // // ניקוי זיכרון
-        // for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-        //     delete p;
-        // }
+
         deleteAllPlayers(game);
 
     }
-    // void deleteAllPlayers(Game& game) {
-    //     for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
-    //         delete p;
-    //     }
-    // }
+    TEST_CASE("Coup Required Rule") {
+        Game game;
+        Player* alice = new Spy(game, "Alice");
+        Player* bob = new Governor(game, "Bob");
+
+        game.addPlayer(alice);
+        game.addPlayer(bob);
+
+        SUBCASE("Must perform coup at 10 coins") {
+            alice->add_coins(10);
+            game.set_turn_to(alice);
+
+            CHECK_THROWS_WITH(alice->gather(), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(alice->tax(), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(alice->bribe(),"Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(alice->arrest(*bob), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(alice->sanction(*bob), "Must perform coup with 10 or more coins.");
+
+            CHECK_NOTHROW(alice->coup(*bob));           // Only legal move
+            CHECK_FALSE(bob->is_active());               // Bob should be out
+        }
+
+        SUBCASE("No coup required at 9 coins") {
+            alice->add_coins(9);
+            game.set_turn_to(alice);
+
+            CHECK_NOTHROW(alice->gather());
+            CHECK(alice->coins() == 10);
+        }
+
+        deleteAllPlayers(game);
+    }
+
 
 } // namespace coup

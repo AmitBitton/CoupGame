@@ -1,18 +1,18 @@
 //
 // Created by amit on 5/11/25.
 //
-#include "Screens.h"  // כאן נמצאת ההצהרה של runOpeningScreen
-#include "../Game.h"         // מחלקת המשחק
+#include "Screens.h"
+#include "../Game.h"
 
 using namespace coup;
 
 int main() {
     Game game;
 
-    if (!runOpeningScreen()) return 0;
-    if (!runAddPlayersScreen(game)) return 0;
-    if (!runAssignRolesScreen(game)) return 0;
+    if (!StartGameScreen()) return 0;
+    if (!AddPlayersScreen(game)) return 0;
+    if (!AssignRolesScreen(game)) return 0;
 
-    runGameLoopScreen(game);  // פה מציירים את המשחק האמיתי
+    GameLoopScreen(game);
     return 0;
 }

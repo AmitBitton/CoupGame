@@ -11,7 +11,6 @@ SRC = \
     GUI/Screens.cpp \
     GUI/GameDisplay.cpp \
     GUI/GuiButton.cpp \
-    GUI/ActionHistory.cpp \
     Game.cpp \
     Player.cpp \
     Governor.cpp \

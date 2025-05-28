@@ -9,16 +9,21 @@
 namespace coup {
 
 
-class General : public Player {
+class General : public Player { // General class inherits from Player
 
 
 public:
+
+    // Constructor
     General(Game& game, const std::string& name);
 
+    // Returns the role name of the player ("General")
     std::string role() const override;
 
+    // Special ability: prevents a coup against a player
     void prevent_coup(Player& target);
 
+    // Defines what happens when the General is arrested
     void arrested_by(Player* arresting_player) override;
 
 };

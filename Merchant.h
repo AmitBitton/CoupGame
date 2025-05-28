@@ -8,22 +8,20 @@
 
 
 namespace coup {
+    // Merchant class inherits from Player
+    class Merchant : public Player {
+    public:
+        // Constructor
+        Merchant(Game &game, const std::string &name);
 
-class Merchant : public Player {
+        // Return the role name of this player
+        std::string role() const override;
 
-public:
-    Merchant(Game& game, const std::string& name);
+        // Apply bonus coins at the start of the turn (if conditions are met)
+        void start_turn_bonus();
 
-    void start_turn_bonus();
-
-    std::string role() const override;
-
-    void arrested_by(Player* arresting_player) override;
-
-
-
-};
-
-
+        // Called when this player is arrested by another player
+        void arrested_by(Player *arresting_player) override;
+    };
 }
 #endif //MERCHANT_H

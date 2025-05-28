@@ -7,29 +7,18 @@
 #include "Player.h"
 
 
-
 namespace coup {
+    // Judge class inherits from Player
+    class Judge : public Player {
+    public:
+        // Constructor
+        Judge(Game &game, const std::string &name);
 
-class Judge : public Player {
+        // Returns the role of the player ("Judge")
+        std::string role() const override;
 
-public:
-    Judge(Game& game, const std::string& name);
-
-    std::string role() const override;
-
-    void undo(Player& target) override;
-
-   // void blockBribe();
-
-
-
-
-
-
-
-
-};
-
-
+        // Allows the Judge to undo (block) a bribe action performed by another player
+        void undo(Player &target) override;
+    };
 }
 #endif //JUDGE_H

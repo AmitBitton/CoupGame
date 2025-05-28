@@ -8,21 +8,21 @@
 
 
 namespace coup {
+    class Governor : public Player {
+        // Governor class inherits from Player
 
-class Governor : public Player {
+    public:
+        // Constructor
+        Governor(Game &game, const std::string &name);
 
-public:
-  Governor(Game& game ,const std::string& name);
+        // Returns the role name ("Governor")
+        std::string role() const override;
 
-  std::string role() const override;
+        // Performs the tax action (gain 3 coins)
+        void tax() override;
 
-  void tax() override;
-
-  void undo(Player& target) override;
-
-
-};
-
-
+        // Blocks a tax action that was performed on the target player
+        void undo(Player &target) override;
+    };
 }
 #endif //GOVERNOR_H

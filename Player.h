@@ -8,96 +8,100 @@
 #include "Game.h"
 
 namespace coup {
+    class Player {
+    protected:
+        Game &game; // Reference to the game this player belongs to
 
-class Player {
+        std::string _name; // The player's name
+        int _coins = 0;  // Number of coins the player has
+        bool _active = true;// Indicates if the player is still in the game
+        int _extra_turns = 0; // Counter for extra turns
 
-protected:
-    Game& game;
-    std::string _name;
-    int _coins = 0;
-    bool _active = true;
-    int _extra_turns = 0;
+        std::string _last_action; // Stores the name of the last action taken
+        Player *_last_action_target = nullptr;// Pointer to the target of the last action
 
-    std::string _last_action;
-    Player* _last_action_target = nullptr;
+        bool _sanctioned = false; // Indicates if the player is currently sanctioned
 
-    bool _sanctioned = false;
+        bool _was_arrested_recently = false;  // Flag to track recent arrest
+        Player *last_arrested_target = nullptr; // Stores the target of the last arrest
+        bool _was_couped = false;  // Indicates if the player was recently coup'ed
 
-    bool _was_arrested_recently = false;
-    Player* last_arrested_target = nullptr;
+    public:
+        Player(Game &game, const std::string &name); // Constructor
 
-public:
-    Player(Game& game, const std::string& name);
-    virtual ~Player() = default;
+        virtual ~Player() = default; // Virtual destructor
 
-    const Game& getGame() const {
-        return game;
-    }
+        const Game &getGame() const { // Returns reference to the game
+            return game;
+        }
 
-    virtual void gather();
-    virtual void tax();
-    virtual void bribe();
-    virtual void arrest(Player& target);
-    virtual void sanction(Player& target);
-    virtual void coup(Player& target);
-    virtual void undo(Player& target);
+        virtual void gather();  // Virtual Gather action
 
-    void add_coins(int amount);
-    void deduct_coins(int amount);
-    virtual void arrested_by(Player* arresting_player);
-    std::string get_name() const;
-    virtual std::string role() const { return "Player"; } ;
-    int coins() const;
-    bool is_active() const;
-    void set_active(bool value = true);
+        virtual void tax(); // Virtual tax action
 
-    void deactivate();
+        virtual void bribe(); // Virtual bribe action
 
-    // arrest tracking
-    bool was_arrested_recently() const;
-    void set_arrested_recently(bool val);
-    void mark_arrested() { _was_arrested_recently = true; }
-    void clear_arrested() { _was_arrested_recently = false; }
+        virtual void arrest(Player &target); // Virtual arrest action
 
+        virtual void sanction(Player &target); // Virtual sanction action
 
-    bool is_sanctioned() const;
-    void apply_sanction();
-    void clear_sanction();
+        virtual void coup(Player &target);// Virtual coup action
 
-    std::string last_action() const;
-    Player* last_target() const;
-    void clear_last_action();
-    void clear_last_target();
+        virtual void undo(Player &target);// Virtual undo action
 
-    void check_extra_turn();
+        void add_coins(int amount); // Add coins to the player
 
-    bool _was_couped = false;
+        void deduct_coins(int amount); // Deduct coins from the player
 
-    bool was_couped() const { return _was_couped; }
-    void mark_couped() { _was_couped = true; }
-    void clear_couped() { _was_couped = false; }
+        virtual void arrested_by(Player *arresting_player);// Called when player is arrested
 
+        std::string get_name() const; // Returns the player's name
 
+        virtual std::string role() const { return "Player"; } ; // Returns the role name
 
+        int coins() const; // Returns the number of coins
 
-    bool was_sanctioned() const { return _sanctioned; }
-    void mark_sanctioned(bool val) { _sanctioned = val; }
-    void clear_sanctioned() { _sanctioned = false; }
+        bool is_active() const; // Checks if player is active
 
-    // פעולות נלוות
-    void add_extra_turn();      // מוסיף תור נוסף
-    void cancel_extra_turn();      // מבטל תור נוסף אם יש
-    bool has_extra_turn() const; // בודק האם יש תור נוסף
+        void set_active(bool value = true); // Sets the player as active/inactive
 
-    void set_last_arrested_target(Player* p) { last_arrested_target = p; }
-    Player* get_last_arrested_target() const { return last_arrested_target; }
-    void clear_last_arrested_target() { last_arrested_target = nullptr; }
+        void deactivate();// Marks player as inactive
 
-    int get_extra_turn() const;
+        // --- Arrest tracking ---
+        bool was_arrested_recently() const; // Returns if recently arrested
+        void set_arrested_recently(bool val); // Sets recent arrest flag
+        void mark_arrested() { _was_arrested_recently = true; }// Mark as recently arrested
+        void clear_arrested() { _was_arrested_recently = false; }// Clear arrest flag
+        void set_last_arrested_target(Player *p) { last_arrested_target = p; }// Set last arrested target
+        Player *get_last_arrested_target() const { return last_arrested_target; }// Get last arrested target
+        void clear_last_arrested_target() { last_arrested_target = nullptr; } // Clear last arrested target
 
-};
+        // --- Sanction tracking ---
+        bool is_sanctioned() const;// Returns if player is sanctioned
+        void apply_sanction(); // Applies a sanction
+        void clear_sanction(); // Removes a sanction
+        bool was_sanctioned() const { return _sanctioned; }// Returns if player was sanctioned
+        void mark_sanctioned(bool val) { _sanctioned = val; }// Set sanction flag
+        void clear_sanctioned() { _sanctioned = false; } // Clear sanction flag
 
-    }
+        // --- Last action tracking ---
+        std::string last_action() const; // Returns last action string
+        Player *last_target() const; // Returns last target
+        void clear_last_action();// Clears last action string
+        void clear_last_target(); // Clears last target pointer
+
+        // --- Coup tracking ---
+        bool was_couped() const { return _was_couped; } // Returns if player was coup'ed
+        void mark_couped() { _was_couped = true; }// Mark as coup'ed
+        void clear_couped() { _was_couped = false; } // Clear coup flag
+
+        void check_extra_turn(); // Checks and decrements extra turns if any
+        void add_extra_turn(); // Adds an extra turn
+        void cancel_extra_turn();  // Cancels an extra turn if one exists
+        bool has_extra_turn() const; // Checks if player has an extra turn
+        int get_extra_turn() const;// Return number of extra turns
+    };
+}
 
 
 #endif //PLAYER_H
