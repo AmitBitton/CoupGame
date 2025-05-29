@@ -19,6 +19,47 @@ The last active player remaining wins the game.
 ---
 
 ##  Project Structure
+**Game.h, Game.cpp**  
+Defines and implements the core game logic, managing players, turns, actions, and game flow.
+
+**Player.h, Player.cpp**  
+Base class for all players, handling common attributes and actions.
+
+**Governor.h/cpp, Spy.h/cpp, Baron.h/cpp, General.h/cpp, Judge.h/cpp, Merchant.h/cpp**  
+Role-specific classes, each implementing unique abilities for their respective character in the game.
+
+**GUI/GameDisplay.h, GameDisplay.cpp**  
+Main GUI display – renders player info, action buttons, and background using SFML.
+
+**GUI/GuiButton.h, GuiButton.cpp**  
+Modular SFML button implementation used across all screens.
+
+**GUI/Screens.h, Screens.cpp**  
+Handles different GUI screens: start screen, add players, assign roles, and the main game loop.
+
+**GUI/GuiMain.cpp**  
+Entry point for running the GUI version of the game.
+
+**main.cpp**  
+Simulation of a full game, demonstrating core mechanics without a graphical interface.
+
+**Test.cpp**  
+Contains unit tests for game mechanics and edge cases, implemented using the `doctest` framework.
+
+**doctest.h**  
+The testing framework header used in `Test.cpp`.
+
+**Demo.cpp**  
+Optional console-based demonstration - We were provided with this file in an assignment.
+
+**Makefile**  
+Build automation with targets for compiling, running, testing, valgrind checks, and cleaning up.
+
+**Font/OpenSans-Regular.ttf**  
+Font used in SFML to render readable text in the GUI.
+
+**Background/game_background.png, menu_background.png, win_background.png**  
+SFML background images for gameplay, menu, and win screen respectively.
 
 ### Core Game Logic
 
@@ -135,10 +176,39 @@ Contains the font used by the GUI:
 ## Running the Project
 
 ###  Compile and Run the GUI Version
-This compiles and runs the **SFML GUI** version of the game:
+This compiles and runs the **SFML GUI** version of the game.
 ```
 make run
 ```
+
+#### GUI Flow (Step-by-Step)
+1. **Opening Screen**  
+   Launch the game using the command:
+```
+make run
+```
+The game will open on the main screen.  
+Click **"Start New Game"** to begin.
+
+2. **Add Players Screen**  
+   Type the name of each player (between **2 to 6 players**) in the input field.  
+   After entering a name, click **"Add Player"** to add them.  
+   Once all players are added, click **"Start Game"** to move to the next phase.
+
+3. **Assign Roles Screen**  
+   Each player will receive a role randomly.  
+   Players must click **"Take Card"** one after another to draw their role.  
+   The screen automatically updates to the next player until all have drawn.
+
+4. **Main Game Loop Screen**  
+   Players take turns performing actions using the GUI buttons:
+- **Gather**, **Tax**, **Bribe**, **Arrest**, **Sanction**, **Coup**  
+  If the action is blockable (e.g., `Tax`, `Bribe`, `Coup`), the game automatically passes the turn temporarily to relevant roles (e.g., `Governor`, `Judge`, `General`) who can choose to block or skip.
+  special buttons for each role will appear in the player's corresponding turn in the game.
+- 
+- 5. **End Game**  
+   When only one player remains active, the game ends and a **winner screen** is shown to declare the winner.
+
 ---
 ### Run the Unit Tests
 
@@ -171,7 +241,13 @@ make clean
 ##  Notes
 
 - Supports **2 to 6 players**, each with randomly assigned roles.
-- 
+- Players can have **duplicate roles** – multiple players may receive the same role.
+- The game logic throws meaningful **exceptions** when illegal actions are attempted.
+- Includes a **modular GUI** built with SFML, separated into clear screens.
+- Fonts and backgrounds are loaded from the `Font/` and `Background/` directories.
+- Includes a **Makefile** with commands for compilation, testing, and memory checks.
+- If a player starts their turn with **10 or more coins**, they are **must to perform a `coup`**.
+
 ---
 
 # Author
