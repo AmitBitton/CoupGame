@@ -1,6 +1,20 @@
 # Coup C++ Game
 
-This project is an implementation of the **Coup** game in C++, with added **role-based logic** and a **graphical interface using SFML**.
+## Overview
+This project implements the board game **Coup** in C++, combining core game logic with a **graphical user interface (GUI)** using the **SFML** library.
+The game supports **2 to 6 players**, each randomly assigned a **role** (Governor, Spy, Baron, General, Judge, or Merchant), with unique special abilities.
+Each player takes turns performing actions such as: `gather`, `tax`, `bribe`, `arrest`, `sanction` and `coup`.
+Certain actions (like tax, bribe, and coup) can be blocked by specific roles.
+The game includes logic for handling these blocks by passing temporary turns to relevant players (Detailed explanation below).
+The last active player remaining wins the game.
+
+### This project includes:
+- Full implementation of game logic (`Game` and `Player` classes).
+- Specialized role classes implementing unique abilities and block mechanics.
+- A graphical interface using **SFML** for interactive gameplay.
+- A **console demo** in `main.cpp` that simulates a full game run.
+- A complete **test suite** using the **Doctest** framework to validate logic and edge cases.
+
 
 ---
 
@@ -102,12 +116,29 @@ This mechanism ensures that reactions to powerful actions are handled immediatel
 
 ---
 
+## Assets
+
+### `Background/`
+Contains background images used in the game screens:
+- `menu_background.png` – background for the **main menu** screen.
+- `game_background.png` – background for the **main game** screen.
+- `win_background.png` – background for the **winner** screen.
+
+These images are loaded dynamically using **SFML**, and their presence is required for the game to render correctly.
+
+### `Font/`
+Contains the font used by the GUI:
+- `OpenSans-Regular.ttf` .
+
+---
+
 ## Running the Project
 
 ###  Compile and Run the GUI Version
 This compiles and runs the **SFML GUI** version of the game:
-
-`make run`
+```
+make run
+```
 ---
 ### Run the Unit Tests
 
