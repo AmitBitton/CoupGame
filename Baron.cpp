@@ -1,4 +1,4 @@
-//
+//amiteste.bitton@msmail.ariel.ac.il
 // Created by amit on 5/9/25.
 //
 
@@ -19,7 +19,7 @@ namespace coup {
     // Special ability: Invests 3 coins to gain 6 coins total (net +3)
     void Baron::invest() {
         if (!is_active()) throw std::runtime_error("Inactive player cannot act"); // Player must be active
-        if (!game.is_turn(this)) throw std::runtime_error("Not your turn"); // Only current player can act
+        if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn"); // Check turn
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins."); // Must coup
         if (_coins < 3) throw std::runtime_error("Not enough coins to invest"); // Needs at least 3 coins to invest
 

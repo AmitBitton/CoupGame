@@ -1,4 +1,4 @@
-//
+//amiteste.bitton@msmail.ariel.ac.il
 // Created by amit on 5/22/25.
 //
 #define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
@@ -35,7 +35,51 @@ namespace coup {
             deleteAllPlayers(game);
 
         }
+        SUBCASE("Require At Least Two Players") {
+            // Test with zero players
+            CHECK(game.players().empty());
+            CHECK_THROWS_WITH(game.turn(), "No players in the game");
 
+            // Test with one player
+            game.addPlayer(new Governor(game, "Amit"));
+            CHECK(game.players().size() == 1);
+            CHECK_THROWS_WITH(game.turn(), "At least 2 players are required to start the game.");
+
+            // Test with two players
+            game.addPlayer(new Spy(game, "Yahav"));
+            CHECK(game.players().size() == 2);
+            CHECK_NOTHROW(game.turn());
+            CHECK(game.turn() == "Amit");
+
+            // Test with three players
+            game.addPlayer(new Baron(game, "Avia"));
+            CHECK(game.players().size() == 3);
+            CHECK_NOTHROW(game.turn());
+            CHECK(game.turn() == "Amit");
+
+            deleteAllPlayers(game);
+        }
+
+        SUBCASE("No Active Players") {
+            game.addPlayer(new Governor(game, "Amit"));
+            game.addPlayer(new Spy(game, "Yahav"));
+            game.remove_player(game.get_players()[0]);
+            game.remove_player(game.get_players()[1]);
+            CHECK_THROWS_WITH(game.turn(), "No active players remaining.");
+            CHECK(game.is_over());
+            CHECK_THROWS_AS(game.winner(), std::runtime_error);
+            deleteAllPlayers(game);
+        }
+        SUBCASE("Try Action Error Handling") {
+            game.addPlayer(new Governor(game, "Amit"));
+            game.addPlayer(new Spy(game, "Yahav"));
+            Player* amit = game.get_players()[0];
+            game.try_action([&]() { amit->tax(); }); // Should work
+            CHECK(game.get_error_message().empty());
+            game.try_action([&]() { amit->tax(); }); // Should fail (not Amit's turn)
+            CHECK(game.get_error_message() == "Not your turn");
+            deleteAllPlayers(game);
+        }
         SUBCASE("Adding Players") {
             game.addPlayer(new Governor(game, "Amit"));
             game.addPlayer(new Spy(game, "Yahav"));
@@ -166,6 +210,10 @@ namespace coup {
             CHECK_FALSE(game.is_waiting_tax_block());
             CHECK(ariel->coins() == 0);
             CHECK(ariel->last_action().empty());
+            SUBCASE("Tax Not Your Turn") {
+                game.set_turn_to(ariel);
+                CHECK_THROWS_AS(amit->tax(), std::runtime_error);
+            }
             deleteAllPlayers(game);
 
         }
@@ -192,6 +240,16 @@ namespace coup {
             CHECK(amit->coins() == 2);
 
             CHECK_THROWS_AS(amit->gather(), std::runtime_error);
+            SUBCASE("Bribe Invalid Conditions") {
+                amit->deactivate();
+                CHECK_THROWS_AS(amit->bribe(), std::runtime_error);
+                amit->set_active(true);
+                game.set_turn_to(ariel);
+                CHECK_THROWS_AS(amit->bribe(), std::runtime_error);
+                game.set_turn_to(amit);
+                amit->deduct_coins(amit->coins());
+                CHECK_THROWS_WITH(amit->bribe(), "Not enough coins to bribe");
+            }
             deleteAllPlayers(game);
 
         }
@@ -205,10 +263,23 @@ namespace coup {
             CHECK(amit->last_action() == "arrest");
             CHECK_THROWS_AS(amit->arrest(*sapir), std::runtime_error); // Cannot arrest same player twice
             CHECK_THROWS_AS(amit->arrest(*amit), std::runtime_error); // Cannot arrest self
+            SUBCASE("Arrest Invalid Conditions") {
+                sapir->deactivate();
+                CHECK_THROWS_AS(amit->arrest(*sapir), std::runtime_error);
+                sapir->set_active(true);
+                game.set_turn_to(ariel);
+                CHECK_THROWS_AS(amit->arrest(*sapir), std::runtime_error);
+                game.set_turn_to(amit);
+                sapir->deduct_coins(sapir->coins());
+                CHECK_THROWS_WITH(amit->arrest(*yahav), "Target has no coins to steal.");
+            }
             deleteAllPlayers(game);
 
         }
-
+        SUBCASE("Arrest No Coins") {
+            CHECK_THROWS_AS(amit->arrest(*yahav), std::runtime_error); // Yahav has 0 coins
+            deleteAllPlayers(game);
+        }
         SUBCASE("Sanction Action") {
             amit->add_coins(3);
             amit->sanction(*ariel);
@@ -216,8 +287,21 @@ namespace coup {
             CHECK(ariel->is_sanctioned());
             CHECK(amit->last_action() == "sanction");
             CHECK_THROWS_AS(ariel->gather(), std::runtime_error); // Sanction blocks gather
-            CHECK_THROWS_AS(amit->sanction(*ariel), std::runtime_error); // Insufficient coins
-
+            CHECK_THROWS_AS(amit->sanction(*ariel), std::runtime_error);
+            SUBCASE("Sanction with Judge") {
+                game.set_turn_to(amit);
+                amit->add_coins(3);
+                CHECK_THROWS_WITH(amit->sanction(*linoy), "Not enough coins to perform sanction.");
+                amit->add_coins(1);
+                CHECK_NOTHROW(amit->sanction(*linoy));
+            }
+            SUBCASE("Sanction Invalid Conditions") {
+                amit->deactivate();
+                CHECK_THROWS_AS(amit->sanction(*ariel), std::runtime_error);
+                amit->set_active(true);
+                game.set_turn_to(ariel);
+                CHECK_THROWS_AS(amit->sanction(*ariel), std::runtime_error);
+            }
             game.set_turn_to(avia);
             avia->add_coins(3);
             avia->sanction(*yahav);
@@ -227,11 +311,17 @@ namespace coup {
             CHECK(yahav->coins() == 1); //yahav is a Baron
             game.set_turn_to(yahav);
             CHECK_THROWS_AS(yahav->gather(), std::runtime_error); // Sanction blocks gather
-            CHECK_THROWS_AS(avia->sanction(*yahav), std::runtime_error); // Insufficient coins
+            CHECK_THROWS_AS(avia->sanction(*yahav), std::runtime_error);
             deleteAllPlayers(game);
 
         }
-
+        SUBCASE("Sanction Insufficient Coins") {
+            amit->add_coins(2);
+            CHECK_THROWS_AS(amit->sanction(*yahav), std::runtime_error); // Needs 3 coins
+            amit->add_coins(1); // Now has 3
+            CHECK_THROWS_AS(amit->sanction(*linoy), std::runtime_error); // Needs 4 for Judge
+            deleteAllPlayers(game);
+        }
         SUBCASE("Coup Action") {
             amit->add_coins(7);
             amit->coup(*ariel);
@@ -243,6 +333,22 @@ namespace coup {
             game.advance_coup_block_queue();
             CHECK_FALSE(ariel->is_active());
             CHECK_FALSE(game.is_waiting_coup_block());
+            SUBCASE("Coup Invalid Conditions") {
+                amit->add_coins(3);
+                game.set_turn_to(amit);
+                CHECK_THROWS_WITH(amit->coup(*sapir), "Not enough coins to perform coup");
+                amit->add_coins(4);
+                amit->deactivate();
+                CHECK_THROWS_AS(amit->coup(*sapir), std::runtime_error);
+                amit->set_active(true);
+                sapir->deactivate();
+                CHECK_THROWS_AS(amit->coup(*sapir), std::runtime_error);
+                sapir->set_active(true);
+                game.set_turn_to(ariel);
+                CHECK_THROWS_AS(amit->coup(*sapir), std::runtime_error);
+                game.set_turn_to(amit);
+                CHECK_THROWS_AS(amit->coup(*amit), std::runtime_error);
+            }
             deleteAllPlayers(game);
 
         }
@@ -255,7 +361,6 @@ namespace coup {
             CHECK_THROWS_AS(amit->gather(), std::runtime_error); // Must coup with 10+ coins
             CHECK_THROWS_AS(amit->sanction(*amit), std::runtime_error); // Cannot sanction self
             deleteAllPlayers(game);
-
         }
 
         deleteAllPlayers(game);

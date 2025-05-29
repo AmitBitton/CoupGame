@@ -1,4 +1,4 @@
-//
+//amiteste.bitton@msmail.ariel.ac.il
 // Created by amit on 5/8/25.
 //
 
@@ -34,8 +34,12 @@ namespace coup {
 
     // Returns the name of the player whose turn it is
     string Game::turn() const {
-        if (_players_list.empty()) { // No players in game
+        if (_players_list.empty()) {
+            // No players in game
             throw runtime_error("No players in the game");
+        }
+        if (_players_list.size() < 2) { //check minimum
+             throw std::runtime_error("At least 2 players are required to start the game.");
         }
         size_t count = 0;
         size_t index = _current_turn; // Start from current turn index
@@ -209,7 +213,6 @@ namespace coup {
             return;
         }
 
-        Player *nextGovernor = tax_governors_queue.front();
         tax_governors_queue.erase(tax_governors_queue.begin());  // Remove from the queue
 
         if (tax_governors_queue.empty()) {  // If that was the last one
@@ -276,7 +279,6 @@ namespace coup {
 
             return;
         }
-        Player *nextGeneral = coup_generals_queue.front(); // Get next general
         coup_generals_queue.erase(coup_generals_queue.begin()); // Remove from queue
         if (!coup_generals_queue.empty()) {
             set_turn_to(coup_generals_queue[0]); // Set turn to next general
@@ -373,6 +375,7 @@ namespace coup {
     void Game::print_turn_summary(const std::string &action, Player *actor, Player *target,
                                   bool was_blocked, Player *blocker) {
         std::cout << "\n======= TURN SUMMARY =======\n";
+        std::cout << actor->get_name() << " turn \n";
         std::cout << actor->get_name() << " (" << actor->role() << ") performed " << action;
         if (target) {
             std::cout << " on " << target->get_name() << " (" << target->role() << ")";

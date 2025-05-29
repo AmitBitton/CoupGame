@@ -1,67 +1,32 @@
-# קומפיילר ודגלים
-CXX = g++
+CXX = clang++-18
 CXXFLAGS = -std=c++20 -Wall -Wextra -I. -IGUI -IFont
-
-# ספריות SFML
 LDFLAGS = -lsfml-graphics -lsfml-window -lsfml-system
 
-# קבצי קוד
-SRC = \
-    GUI/GuiMain.cpp \
-    GUI/Screens.cpp \
-    GUI/GameDisplay.cpp \
-    GUI/GuiButton.cpp \
-    Game.cpp \
-    Player.cpp \
-    Governor.cpp \
-    General.cpp \
-    Baron.cpp \
-    Judge.cpp \
-    Merchant.cpp \
-    Spy.cpp
+SRC = GUI/GuiMain.cpp GUI/Screens.cpp GUI/GameDisplay.cpp GUI/GuiButton.cpp \
+      Game.cpp Player.cpp Governor.cpp General.cpp Baron.cpp \
+      Judge.cpp Merchant.cpp Spy.cpp
 
-# קבצי מקור לטסטים – כולל GUI
-TEST_SRC = \
-    Test.cpp \
-    Game.cpp \
-    Player.cpp \
-    Governor.cpp \
-    General.cpp \
-    Baron.cpp \
-    Judge.cpp \
-    Merchant.cpp \
-    Spy.cpp \
-    GUI/GameDisplay.cpp \
-    GUI/GuiButton.cpp
-# קובץ main נפרד לבדיקה
-MAIN_SRC = main.cpp \
-    Game.cpp \
-    Player.cpp \
-    Governor.cpp \
-    General.cpp \
-    Baron.cpp \
-    Judge.cpp \
-    Merchant.cpp \
-    Spy.cpp
+TEST_SRC = Test.cpp Game.cpp Player.cpp Governor.cpp General.cpp \
+           Baron.cpp Judge.cpp Merchant.cpp Spy.cpp \
+           GUI/GameDisplay.cpp GUI/GuiButton.cpp
+
+MAIN_SRC = main.cpp Game.cpp Player.cpp Governor.cpp General.cpp \
+           Baron.cpp Judge.cpp Merchant.cpp Spy.cpp
+
 
 MAIN_TARGET = Main
-
-
-
-# שם קובץ ההרצה
 TARGET = coup_gui
 TEST_TARGET = coup_test
 
-all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS)  $(SRC)  -o $(TARGET) $(LDFLAGS)
 
 $(TEST_TARGET): $(TEST_SRC)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(TEST_SRC) -o $(TEST_TARGET) $(LDFLAGS)
 
 $(MAIN_TARGET): $(MAIN_SRC)
-	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) $(MAIN_SRC) -o $(MAIN_TARGET) $(LDFLAGS)
 
 run: $(TARGET)
 	./$(TARGET)
@@ -79,4 +44,4 @@ valgrind: $(TEST_TARGET)
 
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGET) $(TEST_TARGET) $(MAIN_TARGET) *.o

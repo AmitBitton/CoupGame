@@ -1,4 +1,4 @@
-//
+//amiteste.bitton@msmail.ariel.ac.il
 // Created by amit on 5/8/25.
 //
 
@@ -19,7 +19,7 @@ namespace coup {
     // Gather action
     void Player::gather() {
         if (!is_active()) throw std::runtime_error("Inactive player cannot play");// Must be active
-        if (!game.is_turn(this)) throw std::runtime_error("Not your turn"); // Check turn
+        if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn"); // Check turn
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");// Enforce coup rule
         if (_sanctioned) throw std::runtime_error("You are on sanctioned, cannot gather");// Sanction blocks gather
 
@@ -74,7 +74,7 @@ namespace coup {
     // Bribe action
     void Player::bribe() {
         if (!is_active()) throw std::runtime_error("Inactive player cannot act");// Must be active
-        if (!game.is_turn(this)) throw std::runtime_error("Not your turn");// Must be player's turn
+        if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn"); // Check turn
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins."); // Enforce coup rule
         if (_coins < 4) throw std::runtime_error("Not enough coins to bribe");// Must have at least 4 coins
 
@@ -114,7 +114,7 @@ namespace coup {
             throw std::runtime_error("Cannot arrest yourself.");// Cannot arrest self
         }
 
-        if (!game.is_turn(this)) throw std::runtime_error("Not your turn");// Must be turn
+        if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn"); // Check turn
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins.");// Enforce coup rule
 
         for (Player* p : game.get_players()) {

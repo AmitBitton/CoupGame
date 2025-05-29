@@ -1,5 +1,4 @@
-// GuiButton.cpp
-
+//amiteste.bitton@msmail.ariel.ac.il
 #include "GuiButton.h"
 
 namespace coup {

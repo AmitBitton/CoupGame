@@ -1,4 +1,4 @@
-// GameDisplay.cpp
+//amiteste.bitton@msmail.ariel.ac.il
 #include "GameDisplay.h"
 #include "../Spy.h"
 #include "../Baron.h"
@@ -757,8 +757,7 @@ namespace coup {
             {"General", {"Block Coup", "Skip Coup Block"}}
         };
 
-        bool isBlockingPhase = game.is_waiting_tax_block() || game.is_waiting_bribe_block() || game.
-                               is_waiting_coup_block();
+
 
         for (auto &btn: actionButtons) {
             const std::string &label = btn.getLabel();

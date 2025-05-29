@@ -1,4 +1,4 @@
-//
+//amiteste.bitton@msmail.ariel.ac.il
 // Created by amit on 5/8/25.
 //
 
@@ -21,7 +21,7 @@ namespace coup {
     // override tax action - tax for governors
     void Governor::tax() {
         if (!is_active()) throw std::runtime_error("Inactive player cannot act"); // Must be active
-        if (!game.is_turn(this)) throw std::runtime_error("Not your turn");  // Must be player's turn
+        if (game.turn() != this->get_name()) throw std::runtime_error("Not your turn"); // Check turn
         if (_coins >= 10) throw std::runtime_error("Must perform coup with 10 or more coins."); // Enforce coup rule
         if (_sanctioned) throw std::runtime_error("Sanctioned – cannot tax");  // Sanction prevents tax
 
