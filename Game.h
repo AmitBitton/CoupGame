@@ -131,7 +131,7 @@ namespace coup {
         void clear_error_message(); // Clear error message
         void set_error_message(const std::string &msg); // Set error message
 
-        // === Turn Summary Logger ===
+        //--- Turn Summary Logger---
         void print_turn_summary(const std::string &action, Player *actor, Player *target = nullptr,
                                 bool was_blocked = false, Player *blocker = nullptr); // Print detailed turn info
     };

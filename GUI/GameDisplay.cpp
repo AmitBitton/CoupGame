@@ -342,7 +342,7 @@ namespace coup {
             updateButtonStates();
             checkAndShowError();
         });
-        // Invest (Baron only)
+        // Invest -Baron only
         actionButtons.emplace_back(font, "Invest", sf::Vector2f(specialStartX, specialButtonY), buttonSize, [this]() {
             Player *current = game.get_current_player();
             if (current && current->is_active() && current->role() == "Baron") {
