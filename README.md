@@ -202,11 +202,11 @@ Click **"Start New Game"** to begin.
 
 4. **Main Game Loop Screen**  
    Players take turns performing actions using the GUI buttons:
-- **Gather**, **Tax**, **Bribe**, **Arrest**, **Sanction**, **Coup**  
+   **Gather**, **Tax**, **Bribe**, **Arrest**, **Sanction**, **Coup**  
   If the action is blockable (e.g., `Tax`, `Bribe`, `Coup`), the game automatically passes the turn temporarily to relevant roles (e.g., `Governor`, `Judge`, `General`) who can choose to block or skip.
   special buttons for each role will appear in the player's corresponding turn in the game.
-- 
-- 5. **End Game**  
+
+5. **End Game**  
    When only one player remains active, the game ends and a **winner screen** is shown to declare the winner.
 
 ---
