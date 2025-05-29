@@ -17,12 +17,15 @@
 
 namespace coup {
 
+    //hellper function to delete all dynamically allocated players from the game and clear the list
     void deleteAllPlayers(Game& game) {
         for (Player* p : const_cast<std::vector<Player*>&>(game.get_players())) {
             delete p;
         }
         const_cast<std::vector<Player*>&>(game.get_players()).clear();
     }
+
+
     TEST_CASE("Game Class Tests") {
         Game game;
 
@@ -74,9 +77,9 @@ namespace coup {
             game.addPlayer(new Governor(game, "Amit"));
             game.addPlayer(new Spy(game, "Yahav"));
             Player* amit = game.get_players()[0];
-            game.try_action([&]() { amit->tax(); }); // Should work
+            game.try_action([&]() { amit->tax(); });
             CHECK(game.get_error_message().empty());
-            game.try_action([&]() { amit->tax(); }); // Should fail (not Amit's turn)
+            game.try_action([&]() { amit->tax(); });
             CHECK(game.get_error_message() == "Not your turn");
             deleteAllPlayers(game);
         }
@@ -102,7 +105,7 @@ namespace coup {
             }
 
             SUBCASE("Add After Game Start") {
-                game.next_turn(); // Start the game
+                game.next_turn();
                 Merchant* ariel = new Merchant(game, "Ariel");
                 CHECK_THROWS_AS(game.addPlayer(ariel), std::runtime_error);
                 delete ariel;
@@ -130,19 +133,19 @@ namespace coup {
         }
 
         SUBCASE("Winner Determination") {
-            game.addPlayer(new Governor(game, "Alice"));
-            game.addPlayer(new Spy(game, "Bob"));
-            CHECK_THROWS_AS(game.winner(), std::runtime_error); // Game not over
+            game.addPlayer(new Governor(game, "Amit"));
+            game.addPlayer(new Spy(game, "Bar"));
+            CHECK_THROWS_AS(game.winner(), std::runtime_error);
 
-            game.remove_player(game.get_players()[1]); // Remove Bob
-            CHECK(game.winner() == "Alice");
+            game.remove_player(game.get_players()[1]);
+            CHECK(game.winner() == "Amit");
             deleteAllPlayers(game);
 
         }
 
         SUBCASE("Game Over Check") {
-            game.addPlayer(new Governor(game, "Alice"));
-            game.addPlayer(new Spy(game, "Bob"));
+            game.addPlayer(new Governor(game, "Amit"));
+            game.addPlayer(new Spy(game, "Bar"));
             game.remove_player(game.get_players()[1]);
             CHECK(game.is_over());
             deleteAllPlayers(game);
@@ -150,10 +153,10 @@ namespace coup {
         }
 
         SUBCASE("Coup Rule Enforcement") {
-            game.addPlayer(new Governor(game, "Alice"));
+            game.addPlayer(new Governor(game, "Amit"));
             Player* alice = game.get_players()[0];
             alice->add_coins(10);
-            CHECK_THROWS_AS(game.next_turn(), std::runtime_error); // Must perform coup
+            CHECK_THROWS_AS(game.next_turn(), std::runtime_error);
             deleteAllPlayers(game);
 
         }
@@ -181,8 +184,8 @@ namespace coup {
             amit->gather();
             CHECK(amit->coins() == 1);
             CHECK(amit->last_action() == "gather");
-            CHECK(game.turn() == "Ariel"); // Turn advances
-            CHECK_THROWS_AS(amit->gather(), std::runtime_error); // Not Alice's turn
+            CHECK(game.turn() == "Ariel");
+            CHECK_THROWS_AS(amit->gather(), std::runtime_error);
             deleteAllPlayers(game);
 
         }
@@ -218,7 +221,7 @@ namespace coup {
 
         }
 
-        SUBCASE("Bribe Action with judge") {
+        SUBCASE("Bribe Action") {
             amit->add_coins(4);
             amit->bribe();
 
@@ -261,8 +264,8 @@ namespace coup {
             CHECK(amit->coins() == 1);
             CHECK(sapir->coins() == 0);
             CHECK(amit->last_action() == "arrest");
-            CHECK_THROWS_AS(amit->arrest(*sapir), std::runtime_error); // Cannot arrest same player twice
-            CHECK_THROWS_AS(amit->arrest(*amit), std::runtime_error); // Cannot arrest self
+            CHECK_THROWS_AS(amit->arrest(*sapir), std::runtime_error);
+            CHECK_THROWS_AS(amit->arrest(*amit), std::runtime_error);
             SUBCASE("Arrest Invalid Conditions") {
                 sapir->deactivate();
                 CHECK_THROWS_AS(amit->arrest(*sapir), std::runtime_error);
@@ -277,7 +280,7 @@ namespace coup {
 
         }
         SUBCASE("Arrest No Coins") {
-            CHECK_THROWS_AS(amit->arrest(*yahav), std::runtime_error); // Yahav has 0 coins
+            CHECK_THROWS_AS(amit->arrest(*yahav), std::runtime_error);
             deleteAllPlayers(game);
         }
         SUBCASE("Sanction Action") {
@@ -286,7 +289,7 @@ namespace coup {
             CHECK(amit->coins() == 0);
             CHECK(ariel->is_sanctioned());
             CHECK(amit->last_action() == "sanction");
-            CHECK_THROWS_AS(ariel->gather(), std::runtime_error); // Sanction blocks gather
+            CHECK_THROWS_AS(ariel->gather(), std::runtime_error);
             CHECK_THROWS_AS(amit->sanction(*ariel), std::runtime_error);
             SUBCASE("Sanction with Judge") {
                 game.set_turn_to(amit);
@@ -308,18 +311,18 @@ namespace coup {
             CHECK(avia->coins() == 0);
             CHECK(yahav->is_sanctioned());
             CHECK(avia->last_action() == "sanction");
-            CHECK(yahav->coins() == 1); //yahav is a Baron
+            CHECK(yahav->coins() == 1);
             game.set_turn_to(yahav);
-            CHECK_THROWS_AS(yahav->gather(), std::runtime_error); // Sanction blocks gather
+            CHECK_THROWS_AS(yahav->gather(), std::runtime_error);
             CHECK_THROWS_AS(avia->sanction(*yahav), std::runtime_error);
             deleteAllPlayers(game);
 
         }
-        SUBCASE("Sanction Insufficient Coins") {
+        SUBCASE("Sanction -not enouth coins") {
             amit->add_coins(2);
-            CHECK_THROWS_AS(amit->sanction(*yahav), std::runtime_error); // Needs 3 coins
-            amit->add_coins(1); // Now has 3
-            CHECK_THROWS_AS(amit->sanction(*linoy), std::runtime_error); // Needs 4 for Judge
+            CHECK_THROWS_AS(amit->sanction(*yahav), std::runtime_error);
+            amit->add_coins(1);
+            CHECK_THROWS_AS(amit->sanction(*linoy), std::runtime_error);
             deleteAllPlayers(game);
         }
         SUBCASE("Coup Action") {
@@ -355,11 +358,11 @@ namespace coup {
 
         SUBCASE("Invalid Actions") {
             amit->deactivate();
-            CHECK_THROWS_AS(amit->gather(), std::runtime_error); // Inactive player
+            CHECK_THROWS_AS(amit->gather(), std::runtime_error);
             amit->set_active(true);
             amit->add_coins(10);
-            CHECK_THROWS_AS(amit->gather(), std::runtime_error); // Must coup with 10+ coins
-            CHECK_THROWS_AS(amit->sanction(*amit), std::runtime_error); // Cannot sanction self
+            CHECK_THROWS_AS(amit->gather(), std::runtime_error);
+            CHECK_THROWS_AS(amit->sanction(*amit), std::runtime_error);
             deleteAllPlayers(game);
         }
 
@@ -378,10 +381,10 @@ namespace coup {
 
         SUBCASE("Tax Action") {
             amit->tax();
-            CHECK(amit->coins() == 3); // Governor gets 3 coins
+            CHECK(amit->coins() == 3);
             CHECK(game.is_waiting_tax_block());
             CHECK(game.get_tax_target() == amit);
-            CHECK(game.turn() == "Charlie"); // Charlie (another Governor) can block
+            CHECK(game.turn() == "Charlie");
             deleteAllPlayers(game);
 
         }
@@ -404,9 +407,9 @@ namespace coup {
 
         SUBCASE("Edge Cases") {
             amit->add_coins(10);
-            CHECK_THROWS_AS(amit->tax(), std::runtime_error); // Must coup with 10+ coins
+            CHECK_THROWS_AS(amit->tax(), std::runtime_error);
             amit->deactivate();
-            CHECK_THROWS_AS(amit->tax(), std::runtime_error); // Inactive player
+            CHECK_THROWS_AS(amit->tax(), std::runtime_error);
             deleteAllPlayers(game);
 
         }
@@ -416,58 +419,58 @@ namespace coup {
 
 TEST_CASE("Spy Role Tests") {
     Game game;
-    Spy* alice = new Spy(game, "Alice");
-    Player* bob = new Governor(game, "Bob");
+    Spy* amit = new Spy(game, "Amit");
+    Player* avia = new Governor(game, "Avia");
 
-    game.addPlayer(alice);
-    game.addPlayer(bob);
+    game.addPlayer(amit);
+    game.addPlayer(avia);
 
     SUBCASE("See Coins") {
-        bob->add_coins(5);
-        CHECK(alice->see_coins(*bob) == 5);
-        alice->deactivate();
-        CHECK_THROWS_AS(alice->see_coins(*bob), std::runtime_error); // Inactive spy
+        avia->add_coins(5);
+        CHECK(amit->see_coins(*avia) == 5);
+        amit->deactivate();
+        CHECK_THROWS_AS(amit->see_coins(*avia), std::runtime_error);
         deleteAllPlayers(game);
     }
 
      SUBCASE("Block Arrest - 2 players") {
-         alice->block_arrest_of(*bob);
-         CHECK(alice->is_arrest_blocked(bob));
-         game.set_turn_to(bob);
-         CHECK_THROWS_WITH(bob->arrest(*alice), "You are blocked from using arrest this turn (by Spy).");
+         amit->block_arrest_of(*avia);
+         CHECK(amit->is_arrest_blocked(avia));
+         game.set_turn_to(avia);
+         CHECK_THROWS_WITH(avia->arrest(*amit), "You are blocked from using arrest this turn (by Spy).");
          game.next_turn();
         game.next_turn();
-         alice->release_arrest_block_if_expired(bob, game.get_current_turn_index());
-         CHECK_FALSE(alice->is_arrest_blocked(bob)); // Block expired
+         amit->release_arrest_block_if_expired(avia, game.get_current_turn_index());
+         CHECK_FALSE(amit->is_arrest_blocked(avia)); // Block expired
         deleteAllPlayers(game);
 
      }
         SUBCASE("Block Arrest - 3 players") {
-        Player* charlie = new Judge(game, "Charlie");
+        Player* charlie = new Judge(game, "Avia");
 
         game.addPlayer(charlie);
-        alice->block_arrest_of(*bob);
-        CHECK(alice->is_arrest_blocked(bob));
-        game.set_turn_to(bob);
-        CHECK_THROWS_WITH(bob->arrest(*alice), "You are blocked from using arrest this turn (by Spy).");
+        amit->block_arrest_of(*avia);
+        CHECK(amit->is_arrest_blocked(avia));
+        game.set_turn_to(avia);
+        CHECK_THROWS_WITH(avia->arrest(*amit), "You are blocked from using arrest this turn (by Spy).");
         game.next_turn();
         game.next_turn();
-        alice->release_arrest_block_if_expired(bob, game.get_current_turn_index());
-        CHECK_FALSE(alice->is_arrest_blocked(bob)); // Block expired
+        amit->release_arrest_block_if_expired(avia, game.get_current_turn_index());
+        CHECK_FALSE(amit->is_arrest_blocked(avia)); // Block expired
         deleteAllPlayers(game);
 
     }
         SUBCASE("Spy actions do not consume turn or coins") {
 
-        CHECK(game.get_current_player() == alice);
-        CHECK(alice->coins() == 0);
-        bob->add_coins(3);
-        int seen = alice->see_coins(*bob);
+        CHECK(game.get_current_player() == amit);
+        CHECK(amit->coins() == 0);
+        avia->add_coins(3);
+        int seen = amit->see_coins(*avia);
         CHECK(seen == 3);
-        CHECK(alice->coins() == 0);
-        alice->block_arrest_of(*bob);
-        CHECK(game.get_current_player() == alice);
-        CHECK(alice->coins() == 0);
+        CHECK(amit->coins() == 0);
+        amit->block_arrest_of(*avia);
+        CHECK(game.get_current_player() == amit);
+        CHECK(amit->coins() == 0);
 
         deleteAllPlayers(game);
     }
@@ -478,25 +481,25 @@ TEST_CASE("Spy Role Tests") {
 
 TEST_CASE("Baron Role Tests") {
     Game game;
-    Baron* alice = new Baron(game, "Alice");
-    Player* bob = new Spy(game, "Bob");
-    game.addPlayer(alice);
-    game.addPlayer(bob);
+    Baron* amit = new Baron(game, "Amit");
+    Player* avia = new Spy(game, "Avia");
+    game.addPlayer(amit);
+    game.addPlayer(avia);
 
     SUBCASE("Invest Action") {
-        alice->add_coins(3);
-        alice->invest();
-        CHECK(alice->coins() == 6);
-        CHECK_THROWS_AS(alice->invest(), std::runtime_error); // Insufficient coins
+        amit->add_coins(3);
+        amit->invest();
+        CHECK(amit->coins() == 6);
+        CHECK_THROWS_AS(amit->invest(), std::runtime_error);
         deleteAllPlayers(game);
 
     }
 
     SUBCASE("Sanction Compensation") {
-        game.set_turn_to(bob);
-        bob->add_coins(3);
-        bob->sanction(*alice);
-        CHECK(alice->coins() == 1); // Baron gets 1 coin compensation
+        game.set_turn_to(avia);
+        avia->add_coins(3);
+        avia->sanction(*amit);
+        CHECK(amit->coins() == 1);
         deleteAllPlayers(game);
 
     }
@@ -507,30 +510,30 @@ TEST_CASE("Baron Role Tests") {
 
 TEST_CASE("General Role Tests") {
     Game game;
-    General* alice = new General(game, "Alice");
-    Player* bob = new Spy(game, "Bob");
-    game.addPlayer(alice);
-    game.addPlayer(bob);
+    General* amit = new General(game, "Amit");
+    Player* avia = new Spy(game, "Avia");
+    game.addPlayer(amit);
+    game.addPlayer(avia);
 
-    SUBCASE("Prevent Coup") {
-        game.set_turn_to(bob);
-        bob->add_coins(7);
-        bob->coup(*alice);
-        alice->add_coins(5);
-        alice->undo(*alice);
-        CHECK(alice->is_active());
-        CHECK(alice->coins() == 0);
+    SUBCASE("Undo Coup") {
+        game.set_turn_to(avia);
+        avia->add_coins(7);
+        avia->coup(*amit);
+        amit->add_coins(5);
+        amit->undo(*amit);
+        CHECK(amit->is_active());
+        CHECK(amit->coins() == 0);
         CHECK_FALSE(game.is_waiting_coup_block());
         deleteAllPlayers(game);
 
     }
 
      SUBCASE("Arrest Compensation") {
-        game.set_turn_to(bob);
-        alice->add_coins(1);
-         bob->arrest(*alice);
-         CHECK(alice->coins() == 1); // General gets coin back
-         CHECK(bob->coins() == 0);
+        game.set_turn_to(avia);
+        amit->add_coins(1);
+         avia->arrest(*amit);
+         CHECK(amit->coins() == 1);
+         CHECK(avia->coins() == 0);
         deleteAllPlayers(game);
      }
         deleteAllPlayers(game);
@@ -539,28 +542,28 @@ TEST_CASE("General Role Tests") {
 
 TEST_CASE("Judge Role Tests") {
     Game game;
-    Judge* alice = new Judge(game, "Alice");
-    Player* bob = new Spy(game, "Bob");
-    game.addPlayer(alice);
-    game.addPlayer(bob);
+    Judge* amit = new Judge(game, "Amit");
+    Player* avia = new Spy(game, "Avia");
+    game.addPlayer(amit);
+    game.addPlayer(avia);
 
     SUBCASE("Undo Bribe") {
-        game.set_turn_to(bob);
-        bob->add_coins(4);
-        bob->bribe();
-        alice->undo(*bob);
-        CHECK_FALSE(bob->has_extra_turn());
-        CHECK(bob->last_action().empty());
+        game.set_turn_to(avia);
+        avia->add_coins(4);
+        avia->bribe();
+        amit->undo(*avia);
+        CHECK_FALSE(avia->has_extra_turn());
+        CHECK(avia->last_action().empty());
         CHECK_FALSE(game.is_waiting_bribe_block());
         deleteAllPlayers(game);
 
     }
 
     SUBCASE("Sanction Penalty") {
-        game.set_turn_to(bob);
-        bob->add_coins(4);
-        bob->sanction(*alice);
-        CHECK(bob->coins() == 0); // Judge requires extra coin
+        game.set_turn_to(avia);
+        avia->add_coins(4);
+        avia->sanction(*amit);
+        CHECK(avia->coins() == 0);
         deleteAllPlayers(game);
 
     }
@@ -571,29 +574,29 @@ TEST_CASE("Judge Role Tests") {
 
 TEST_CASE("Merchant Role Tests") {
     Game game;
-    Merchant* alice = new Merchant(game, "Alice");
-    Player* bob = new Spy(game, "Bob");
-    game.addPlayer(alice);
-    game.addPlayer(bob);
+    Merchant* amit = new Merchant(game, "Amit");
+    Player* avia = new Spy(game, "Avia");
+    game.addPlayer(amit);
+    game.addPlayer(avia);
 
     SUBCASE("Start Turn Bonus") {
-        alice->add_coins(3);
-        game.next_turn(); // Triggers Merchant bonus
-        game.next_turn(); // Triggers Merchant bonus
-        CHECK(alice->coins() == 4);
-        alice->deduct_coins(2);
+        amit->add_coins(3);
         game.next_turn();
-        CHECK(alice->coins() == 2); // No bonus if < 3 coins
+        game.next_turn();
+        CHECK(amit->coins() == 4);
+        amit->deduct_coins(2);
+        game.next_turn();
+        CHECK(amit->coins() == 2);
         deleteAllPlayers(game);
 
     }
 
     SUBCASE("Arrest Penalty") {
-        alice->add_coins(2);
-        game.set_turn_to(bob);
-        bob->arrest(*alice);
-        CHECK(alice->coins() == 0); // Merchant pays 2 coins to bank
-        CHECK(bob->coins() == 0); // Bob gets no coins
+        amit->add_coins(2);
+        game.set_turn_to(avia);
+        avia->arrest(*amit);
+        CHECK(amit->coins() == 0);
+        CHECK(avia->coins() == 0);
         deleteAllPlayers(game);
 
     }
@@ -616,16 +619,16 @@ TEST_CASE("Edge Cases and Interactions") {
 
         SUBCASE("Multiple Governors Blocking Tax") {
             alice->tax();
-            CHECK(game.turn() == "Amit"); // Bob can block as a non-Governor
+            CHECK(game.turn() == "Amit");
             game.advance_tax_block_queue();
-            CHECK(game.turn() == "Ariel"); // Charlie (non-Governor)
+            CHECK(game.turn() == "Ariel");
             game.advance_tax_block_queue();
-            CHECK(game.turn() == "Moshe"); // David (non-Governor)
+            CHECK(game.turn() == "Moshe");
             game.advance_tax_block_queue();
-            CHECK(game.turn() == "Omer"); // Eve (non-Governor)
+            CHECK(game.turn() == "Omer");
             game.advance_tax_block_queue();
 
-            CHECK(alice->coins() == 3); // Tax succeeds if not blocked
+            CHECK(alice->coins() == 3);
             deleteAllPlayers(game);
 
         }
@@ -633,56 +636,56 @@ TEST_CASE("Edge Cases and Interactions") {
         deleteAllPlayers(game);
 
     }
-        TEST_CASE("Edge Cases ") {
+        TEST_CASE("Some Cases") {
         Game game;
-        Player* alice = new Governor(game, "Alice");
-        Spy* bob = new Spy(game, "Bob");
+        Player* amit = new Governor(game, "Amit");
+        Spy* avia = new Spy(game, "Avia");
         Player* charlie = new Baron(game, "Charlie");
         General* david = new General(game, "David");
         Player* eve = new Judge(game, "Eve");
         Player* frank = new Merchant(game, "Frank");
-        game.addPlayer(alice);
-        game.addPlayer(bob);
+        game.addPlayer(amit);
+        game.addPlayer(avia);
         game.addPlayer(charlie);
         game.addPlayer(david);
         game.addPlayer(eve);
         game.addPlayer(frank);
 
-        SUBCASE("Multiple Generals Blocking Coup") {
-            alice->add_coins(7);
-            alice->coup(*bob);
-            CHECK(game.turn() == "David"); // David (General) can block
+        SUBCASE("Coup Succeeds Without General Block") {
+            amit->add_coins(7);
+            amit->coup(*avia);
+            CHECK(game.turn() == "David");
             game.advance_coup_block_queue();
-            CHECK_FALSE(bob->is_active()); // Coup succeeds if not blocked
+            CHECK_FALSE(avia->is_active());
             deleteAllPlayers(game);
 
         }
 
-        SUBCASE("Multiple Judges Blocking Bribe") {
-            game.set_turn_to(bob);
-            bob->add_coins(4);
-            bob->bribe();
-            CHECK(game.turn() == "Eve"); // Eve (Judge) can block
+        SUBCASE("Bribe Succeeds Without Judge Block") {
+            game.set_turn_to(avia);
+            avia->add_coins(4);
+            avia->bribe();
+            CHECK(game.turn() == "Eve");
             game.advance_bribe_block_queue();
-            CHECK(bob->has_extra_turn()); // Bribe succeeds if not blocked
+            CHECK(avia->has_extra_turn());
             deleteAllPlayers(game);
 
         }
 
-        SUBCASE("Invalid Action Sequences") {
-            game.set_turn_to(bob);
-            bob->block_arrest_of(*alice);
-            game.set_turn_to(alice);
-            CHECK_THROWS_WITH(alice->arrest(*bob), "You are blocked from using arrest this turn (by Spy).");
+        SUBCASE("Invalid Actions") {
+            game.set_turn_to(avia);
+            avia->block_arrest_of(*amit);
+            game.set_turn_to(amit);
+            CHECK_THROWS_WITH(amit->arrest(*avia), "You are blocked from using arrest this turn (by Spy).");
             game.set_turn_to(eve);
             eve->add_coins(4);
-            eve->sanction(*alice);
-            CHECK_THROWS_AS(alice->tax(), std::runtime_error); // Sanction blocks tax
+            eve->sanction(*amit);
+            CHECK_THROWS_AS(amit->tax(), std::runtime_error);
             frank->add_coins(7);
             david->add_coins(5);
-            frank->coup(*alice);
-            david->undo(*alice);
-            CHECK(alice->is_active()); // General prevents coup
+            frank->coup(*amit);
+            david->undo(*amit);
+            CHECK(amit->is_active());
             deleteAllPlayers(game);
 
         }
@@ -692,32 +695,32 @@ TEST_CASE("Edge Cases and Interactions") {
     }
     TEST_CASE("Coup Required Rule") {
         Game game;
-        Player* alice = new Spy(game, "Alice");
-        Player* bob = new Governor(game, "Bob");
+        Player* amit = new Spy(game, "Amit");
+        Player* yahav = new Governor(game, "Yahav");
 
-        game.addPlayer(alice);
-        game.addPlayer(bob);
+        game.addPlayer(amit);
+        game.addPlayer(yahav);
 
         SUBCASE("Must perform coup at 10 coins") {
-            alice->add_coins(10);
-            game.set_turn_to(alice);
+            amit->add_coins(10);
+            game.set_turn_to(amit);
 
-            CHECK_THROWS_WITH(alice->gather(), "Must perform coup with 10 or more coins.");
-            CHECK_THROWS_WITH(alice->tax(), "Must perform coup with 10 or more coins.");
-            CHECK_THROWS_WITH(alice->bribe(),"Must perform coup with 10 or more coins.");
-            CHECK_THROWS_WITH(alice->arrest(*bob), "Must perform coup with 10 or more coins.");
-            CHECK_THROWS_WITH(alice->sanction(*bob), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(amit->gather(), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(amit->tax(), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(amit->bribe(),"Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(amit->arrest(*yahav), "Must perform coup with 10 or more coins.");
+            CHECK_THROWS_WITH(amit->sanction(*yahav), "Must perform coup with 10 or more coins.");
 
-            CHECK_NOTHROW(alice->coup(*bob));           // Only legal move
-            CHECK_FALSE(bob->is_active());               // Bob should be out
+            CHECK_NOTHROW(amit->coup(*yahav));
+            CHECK_FALSE(yahav->is_active());
         }
 
         SUBCASE("No coup required at 9 coins") {
-            alice->add_coins(9);
-            game.set_turn_to(alice);
+            amit->add_coins(9);
+            game.set_turn_to(amit);
 
-            CHECK_NOTHROW(alice->gather());
-            CHECK(alice->coins() == 10);
+            CHECK_NOTHROW(amit->gather());
+            CHECK(amit->coins() == 10);
         }
 
         deleteAllPlayers(game);
