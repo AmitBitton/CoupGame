@@ -412,7 +412,7 @@ TEST_CASE("General Role Tests") {
         bob->add_coins(7);
         bob->coup(*alice);
         alice->add_coins(5);
-        alice->prevent_coup(*alice);
+        alice->undo(*alice);
         CHECK(alice->is_active());
         CHECK(alice->coins() == 0);
         CHECK_FALSE(game.is_waiting_coup_block());
@@ -576,7 +576,7 @@ TEST_CASE("Edge Cases and Interactions") {
             frank->add_coins(7);
             david->add_coins(5);
             frank->coup(*alice);
-            david->prevent_coup(*alice);
+            david->undo(*alice);
             CHECK(alice->is_active()); // General prevents coup
             deleteAllPlayers(game);
 

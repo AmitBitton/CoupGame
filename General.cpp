@@ -17,7 +17,7 @@ namespace coup {
     }
 
     // General's special ability: prevents a coup on a target player
-    void General::prevent_coup(Player& target) {
+    void General::undo(Player& target) {
         if (!is_active()) throw std::runtime_error("General is not active");  // Cannot act if inactive
         if (!target.was_couped()) throw std::runtime_error("No coup to prevent on this player"); // Can only block an active coup
         if (coins() < 5) throw std::runtime_error("Not enough coins to prevent coup");  // Requires 5 coins to block

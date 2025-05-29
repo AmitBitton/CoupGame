@@ -21,7 +21,7 @@ public:
     std::string role() const override;
 
     // Special ability: prevents a coup against a player
-    void prevent_coup(Player& target);
+    void undo(Player& target) override;
 
     // Defines what happens when the General is arrested
     void arrested_by(Player* arresting_player) override;

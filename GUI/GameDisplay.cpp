@@ -548,7 +548,7 @@ namespace coup {
                     if (!general) throw std::runtime_error("Failed to cast current player to General");
 
                     game.try_action([&]() {
-                        general->prevent_coup(*target); // Call prevent_coup if valid
+                        general->undo(*target); // Call undo if valid
                     });
                     updatePlayerInfo();
                     updateButtonStates();
