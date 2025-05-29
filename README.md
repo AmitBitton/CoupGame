@@ -46,7 +46,7 @@ This project is an implementation of the **Coup** game in C++, with added **role
 #### `Judge`
 - Inherits from `Player`.
 - Can `undo` a bribe action, causing the target player to lose the 4 coins paid.
-- When `sanctioned`, the attacking player must pay an additional coin
+- When `sanctioned`, the attacking player must pay an additional coin.
 
 #### `Merchant`
 - Inherits from `Player`.
@@ -93,7 +93,7 @@ This mechanism ensures that reactions to powerful actions are handled immediatel
 ##  Other Files
 
 ### `main.cpp`
-- simulation of a full game round with six player roles.
+- Simulates a full game round with six player roles.
 - Runs predefined actions and prints the game state after each move.
 
 ### `Test.cpp`
