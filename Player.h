@@ -30,6 +30,8 @@ namespace coup {
         Player(Game &game, const std::string &name); // Constructor
 
         virtual ~Player() = default; // Virtual destructor
+        Player(const Player&) = delete;              // Disable copy constructor
+        Player& operator=(const Player&) = delete;   // Disable assignment
 
         const Game &getGame() const { // Returns reference to the game
             return game;

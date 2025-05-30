@@ -17,9 +17,6 @@ namespace coup {
     Game::Game() : _current_turn(0), _game_started(false), _game_over(false) {
     }
 
-    // Destructor:
-    Game::~Game() {
-    }
 
     // Adds a player before the game starts
     void Game::addPlayer(Player *player) {

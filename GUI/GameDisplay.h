@@ -21,8 +21,7 @@ private:
     std::vector<GuiButton> targetButtons;  // Buttons to choose a target player when needed
     bool selectingTarget = false; // Indicates whether the GUI is currently asking for a target selection
 
-    void setupButtons();// Initializes all action and control buttons
-    void updatePlayerInfo();// Updates the player info texts
+
 
     // Special buttons for blocking actions (only visible during relevant phases)
     GuiButton blockTaxButton; // Button to block tax (Governor)
@@ -35,7 +34,8 @@ private:
 public:
     // Constructor
     GameDisplay(Game& gameRef, sf::Font& fontRef);
-
+    void setupButtons();// Initializes all action and control buttons
+    void updatePlayerInfo();// Updates the player info texts
     void draw(sf::RenderWindow& window); // Draws all UI elements on the window
     void handleClick(sf::Vector2f pos); // Handles click events and triggers button actions
     void handleHover(sf::Vector2f pos);// Updates hover effect on buttons

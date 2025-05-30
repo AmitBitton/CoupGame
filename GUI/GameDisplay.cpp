@@ -314,11 +314,6 @@ namespace coup {
                     Governor *gov = dynamic_cast<Governor *>(current);
                     if (!gov) throw std::runtime_error("Invalid governor cast");
 
-                    std::cout << "[DEBUG] Governor: " << current->get_name() << std::endl;
-                    std::cout << "[DEBUG] Target: " << target->get_name() << std::endl;
-                    std::cout << "[DEBUG] Target last action: " << target->last_action() << std::endl;
-                    std::cout << "[DEBUG] Target coins: " << target->coins() << std::endl;
-
                     // Attempt to undo the target's tax
                     game.try_action([&]() {
                         gov->undo(*target);
@@ -463,7 +458,6 @@ namespace coup {
         // Block Arrest - Spy only
         actionButtons.emplace_back(font, "Block Arrest", sf::Vector2f(specialStartX, specialButtonY), buttonSize,
                                    [this]() {
-                                       std::cout << "[DEBUG] Block Arrest button clicked" << std::endl;
 
                                        Player *current = game.get_current_player();
                                        if (!current || current->role() != "Spy") {
@@ -561,7 +555,6 @@ namespace coup {
 
         // Handles the "Skip Coup Block" button logic
         skipCoupButton = GuiButton(font, "Skip Coup Block", sf::Vector2f(500, 430), sf::Vector2f(150, 40), [this]() {
-            std::cout << "[DEBUG] Skipping coup block\n";
             game.advance_coup_block_queue();
             updatePlayerInfo();
             updateButtonStates();
@@ -737,13 +730,6 @@ namespace coup {
         if (!current) return;
 
         std::string role = current->role();
-        std::cout << "[DEBUG] updateButtonStates: current=" << current->get_name()
-                << ", role=" << role
-                << ", waiting_for_coup_block=" << game.is_waiting_coup_block()
-                << ", coup_target=" << (game.get_coup_target() ? game.get_coup_target()->get_name() : "nullptr")
-                << ", coup_attacker=" << (game.get_coup_attacker() ? game.get_coup_attacker()->get_name() : "nullptr")
-                << ", is_turn=" << game.is_turn(current)
-                << std::endl;
 
         std::unordered_set<std::string> alwaysVisible = {
             "Gather", "Tax", "Bribe", "Arrest", "Sanction", "Coup"
@@ -782,21 +768,13 @@ namespace coup {
 
 
             if (game.is_waiting_coup_block() && role == "General" && game.is_turn(current)) {
-                std::cout << "[DEBUG] General is in blocking phase. Label: " << label
-                        << ", current->coins(): " << current->coins()
-                        << ", coup_target: " << (game.get_coup_target()
-                                                     ? game.get_coup_target()->get_name()
-                                                     : "nullptr")
-                        << std::endl;
 
                 if ((label == "Block Coup" || label == "Skip Coup Block")) {
                     btn.setVisible(true);
                     btn.setEnabled(true);
-                    std::cout << " → Showing button: " << label << std::endl;
                 } else {
                     btn.setVisible(false);
                     btn.setEnabled(false);
-                    std::cout << " → Hiding button: " << label << std::endl;
                 }
                 continue;
             }

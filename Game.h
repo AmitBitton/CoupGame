@@ -42,7 +42,6 @@ namespace coup {
 
     public:
         Game(); // Constructor
-        ~Game(); // Destructor
 
         void addPlayer(Player *player); // Adds a player to the game
         void remove_player(Player *player); // Removes (deactivates) a player
