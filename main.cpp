@@ -18,7 +18,9 @@ using namespace std;
 
 int main() {
     // Demo of game with 6 players
-    Game game;
+    Game game;// Create a game instance
+
+    // Create 6 players with different roles
     Governor amit(game, "amit");
     Spy ariel(game, "ariel");
     Baron avia(game, "avia");
@@ -26,6 +28,7 @@ int main() {
     Judge elad(game, "elad");
     Merchant yahav(game, "yahav");
 
+    // Add players to the game
     game.addPlayer(&amit);
     game.addPlayer(&ariel);
     game.addPlayer(&avia);
@@ -33,7 +36,7 @@ int main() {
     game.addPlayer(&elad);
     game.addPlayer(&yahav);
 
-    // 1
+    //All players gather coins 4 times (4 rounds)
     for (int i = 0; i < 4; ++i) {
         amit.gather();
         ariel.gather();
@@ -42,84 +45,84 @@ int main() {
         elad.gather();
         yahav.gather();
     }
-    amit.tax();
-    ariel.tax();
-    game.advance_tax_block_queue();
-    avia.invest();
-    roy.gather();
-    elad.gather();
-    yahav.tax();
-    amit.undo(yahav);
+    amit.tax();// Governor tax
+    ariel.tax();// Spy tax
+    game.advance_tax_block_queue();// Advance tax block queue after Ariel's tax
+    avia.invest();// Baron invests coins (doubles them)
+    roy.gather();// General gathers
+    elad.gather();// Judge gathers
+    yahav.tax();// Merchant tax
+    amit.undo(yahav);// Governor blocks Yahav's tax
 
-    amit.arrest(yahav);
-    ariel.see_coins(amit);
-    ariel.block_arrest_of(elad);
-    ariel.bribe();
-    game.advance_bribe_block_queue();
-    ariel.gather();
-    ariel.sanction(avia);
-    avia.coup(amit);
-    roy.undo(amit);
-    roy.gather();
+    amit.arrest(yahav);// Amit arrests Yahav
+    ariel.see_coins(amit);// Spy Ariel sees Amit's coin count
+    ariel.block_arrest_of(elad);// Ariel blocks Elad from arresting
+    ariel.bribe(); // Ariel performs bribe (gains extra turns)
+    game.advance_bribe_block_queue();// Skip judge block
+    ariel.gather();// Ariel uses extra turn
+    ariel.sanction(avia);// Sanctions Avia
+    avia.coup(amit);// Avia performs coup on Amit
+    roy.undo(amit);// General Roy undoes coup on Amit
+    roy.gather();// Roy gathers coins
     try {
-        elad.arrest(amit);
+        elad.arrest(amit);// Elad tries to arrest Amit
     } catch (const exception &e) {
-        cout << "[Error] " << e.what() << endl;
+        cout << "[Error] " << e.what() << endl;// Print error if any
     }
 
-    elad.gather();
-    yahav.gather();
+    elad.gather();// Judge gathers
+    yahav.gather();// Merchant gathers
 
-    amit.coup(ariel);
-    game.advance_coup_block_queue();
-    avia.arrest(roy);
-    roy.tax();
-    game.advance_tax_block_queue();
-    elad.gather();
-    yahav.gather();
+    amit.coup(ariel);// Amit coups Ariel
+    game.advance_coup_block_queue();// Advance generals' block phase
+    avia.arrest(roy);// Avia arrests Roy
+    roy.tax();// Roy (General) tries tax
+    game.advance_tax_block_queue();// Advance tax block
+    elad.gather();// Elad gathers
+    yahav.gather();// Yahav gathers
 
-    amit.tax();
-    avia.tax();
-    game.advance_tax_block_queue();
-    roy.tax();
-    game.advance_tax_block_queue();
-    elad.coup(amit);
-    game.advance_coup_block_queue();
-    yahav.coup(avia);
-    game.advance_coup_block_queue();
+    amit.tax();// Amit (Governor) tax
+    avia.tax();// Avia (Baron) tax
+    game.advance_tax_block_queue();// Advance block queue
+    roy.tax();// Roy tax
+    game.advance_tax_block_queue();// Advance again
+    elad.coup(amit);// Elad coups Amit
+    game.advance_coup_block_queue();// Process block phase
+    yahav.coup(avia);// Yahav coups Avia
+    game.advance_coup_block_queue();// Process block phase
 
-    roy.tax();
-    elad.tax();
-    yahav.tax();
+    roy.tax();// Roy performs tax
+    elad.tax();// Elad performs tax
+    yahav.tax();// Yahav performs tax
 
-    roy.gather();
-    elad.tax();
-    yahav.tax();
+    roy.gather(); // Roy gathers 1 coin
+    elad.tax();// Elad performs tax again
+    yahav.tax(); // Yahav performs tax again
 
-    roy.sanction(elad);
-    elad.bribe();
-    elad.tax();
-    elad.gather();
-    yahav.tax();
+    roy.sanction(elad);// Roy sanctions Elad
+    elad.bribe();// Elad bribes
+    elad.tax();// Elad uses extra turn to performs tax
+    elad.gather();// Elad uses extra turn to gather
+    yahav.tax();// Yahav performs tax again
 
-    roy.bribe();
-    game.advance_bribe_block_queue();
-    roy.gather();
-    roy.gather();
-    elad.gather();
-    yahav.coup(roy);
-    game.advance_coup_block_queue();
+    roy.bribe();// Roy performs a bribe
+    game.advance_bribe_block_queue();// Advance through bribe block queue
+    roy.gather();// Roy uses extra turn to gather
+    roy.gather();// Roy uses next turn to gather again
+    elad.gather();// Elad gathers
+    yahav.coup(roy);// Yahav performs a coup against Roy
+    game.advance_coup_block_queue();// Process coup block phase
 
-    elad.gather();
-    yahav.tax();
+    elad.gather();// Elad gathers
+    yahav.tax();// Yahav performs tax
 
-    elad.gather();
-    yahav.gather();
+    elad.gather();// Elad gathers
+    yahav.gather();// Yahav gathers
 
-    elad.gather();
-    yahav.coup(elad);
+    elad.gather();// Elad gathers
+    yahav.coup(elad);// Yahav performs coup against Elad
 
 
-    cout << "\n🏆 Winner: " << game.winner() << endl;
+    cout << "\n🏆 Winner: " << game.winner() << endl;// Print the name of the winner
     return 0;
 }
